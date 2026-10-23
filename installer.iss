@@ -59,6 +59,13 @@ WelcomeLabel2=AmbientLite brings the colours on your screen into your room.%n%nS
 FinishedLabel=AmbientLite is ready.%n%nExit SyncLight, check Strip setup, and choose Screen sync or Static colour. Windows startup is optional in the Startup page.
 
 [Code]
+function InitializeSetup: Boolean;
+begin
+  Result := IsDotNetInstalled(net48, 0);
+  if not Result then
+    SuppressibleMsgBox('AmbientLite needs Microsoft .NET Framework 4.8 or later. Install it from Microsoft, then run setup again.', mbCriticalError, MB_OK, IDOK);
+end;
+
 function StopInstalledApp: String;
 var
   ResultCode: Integer;
