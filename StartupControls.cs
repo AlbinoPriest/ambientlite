@@ -18,6 +18,7 @@ sealed partial class LightWindow {
   trayAtStartup.Checked+=(s,e)=>SaveStartupChoices();trayAtStartup.Unchecked+=(s,e)=>SaveStartupChoices();
   lightingAtStartup.Checked+=(s,e)=>SaveStartupChoices();lightingAtStartup.Unchecked+=(s,e)=>SaveStartupChoices();
   window.Loaded+=async(s,e)=>{
+   LifecycleTrace.Write("Window loaded");
    bool startup=Environment.GetCommandLineArgs().Contains("--startup");
    if(startup&&startInTray){window.Hide();window.Opacity=1;}
    if(!renderingDocumentation&&(Environment.GetCommandLineArgs().Contains("--start")||(startup&&startLighting)))await Start(false);
@@ -30,6 +31,6 @@ sealed partial class LightWindow {
  }
  void SaveStartupChoices(){if(refreshingStartup)return;startInTray=trayAtStartup.IsChecked==true;startLighting=lightingAtStartup.IsChecked==true;SaveIfValid();}
  public void Activate(){window.Dispatcher.BeginInvoke(new Action(Show));}
- public void RequestExit(){window.Dispatcher.BeginInvoke(new Action(async()=>await ExitApplication()),System.Windows.Threading.DispatcherPriority.ContextIdle);}
- async Task ExitApplication(){exiting=true;HideQuick();await Stop();window.Close();}
+ public void RequestExit(){LifecycleTrace.Write("Quit callback queued");window.Dispatcher.BeginInvoke(new Action(async()=>await ExitApplication()),System.Windows.Threading.DispatcherPriority.ContextIdle);}
+ async Task ExitApplication(){LifecycleTrace.Write("Closing requested");exiting=true;HideQuick();await Stop();LifecycleTrace.Write("Lighting worker stopped");window.Close();}
 }

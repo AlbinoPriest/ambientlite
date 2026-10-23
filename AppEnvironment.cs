@@ -25,6 +25,13 @@ static class AppEnvironment {
  }
 }
 
+static class LifecycleTrace {
+ static readonly object Gate=new object();
+ static readonly string PathName=FindPath();
+ static string FindPath(){var args=Environment.GetCommandLineArgs();int at=Array.IndexOf(args,"--lifecycle-log");return at>=0&&at+1<args.Length?args[at+1]:null;}
+ public static void Write(string message){if(PathName==null)return;try{lock(Gate)File.AppendAllText(PathName,DateTime.UtcNow.ToString("O")+" ["+Process.GetCurrentProcess().Id+"] "+message+Environment.NewLine);}catch{}}
+}
+
 static class StartupRegistration {
  public const string Key=@"Software\Microsoft\Windows\CurrentVersion\Run";
  public static string Command(string executable){
@@ -46,22 +53,26 @@ sealed class AppSession : IDisposable {
   show=new EventWaitHandle(false,EventResetMode.AutoReset,showName);exit=new EventWaitHandle(false,EventResetMode.AutoReset,exitName);
   showWait=ThreadPool.RegisterWaitForSingleObject(show,(s,t)=>activate(),null,Timeout.Infinite,false);
   exitWait=ThreadPool.RegisterWaitForSingleObject(exit,(s,t)=>quit(),null,Timeout.Infinite,false);
+  LifecycleTrace.Write("Shutdown handlers ready");
  }
  public static bool Activate(){return Signal(ShowEvent);}
  static bool Signal(string name){try{using(var handle=EventWaitHandle.OpenExisting(name)){handle.Set();return true;}}catch(WaitHandleCannotBeOpenedException){return false;}}
- public static int Shutdown(){return Shutdown(MutexName,ExitEvent,TimeSpan.FromSeconds(10));}
+ public static int Shutdown(){return Shutdown(MutexName,ExitEvent,TimeSpan.FromSeconds(30));}
  internal static int Shutdown(string mutexName,string exitName,TimeSpan timeout){
-  Mutex mutex;if(!Mutex.TryOpenExisting(mutexName,out mutex))return 0;
+  Mutex mutex;if(!Mutex.TryOpenExisting(mutexName,out mutex)){LifecycleTrace.Write("No instance mutex");return 0;}
   using(mutex){
+   LifecycleTrace.Write("Instance mutex found; waiting for shutdown handler");
    var watch=Stopwatch.StartNew();
    // The instance mutex exists before WPF finishes loading and registers IPC.
    // Keep waiting for its handler; a missing event does not mean it has exited.
    while(!Signal(exitName)){
-    if(WaitForExit(mutex,0))return 0;
-    if(watch.Elapsed>=timeout)return 1;
+    if(WaitForExit(mutex,0)){LifecycleTrace.Write("Instance exited before registering handler");return 0;}
+    if(watch.Elapsed>=timeout){LifecycleTrace.Write("Timed out waiting for shutdown handler");return 1;}
     Thread.Sleep(25);
    }
-   return WaitForExit(mutex,Math.Max(0,(int)(timeout-watch.Elapsed).TotalMilliseconds))?0:1;
+   LifecycleTrace.Write("Shutdown handler signalled; waiting for instance to exit");
+   bool stopped=WaitForExit(mutex,Math.Max(0,(int)(timeout-watch.Elapsed).TotalMilliseconds));
+   LifecycleTrace.Write(stopped?"Instance exited":"Timed out waiting for instance to exit");return stopped?0:1;
   }
  }
  static bool WaitForExit(Mutex mutex,int milliseconds){try{if(!mutex.WaitOne(milliseconds))return false;}catch(AbandonedMutexException){}mutex.ReleaseMutex();return true;}

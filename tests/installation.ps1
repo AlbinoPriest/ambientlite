@@ -8,6 +8,8 @@ $preferences = Join-Path $env:LOCALAPPDATA 'AmbientLite\settings.txt'
 $runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
 $app = Join-Path $installed 'AmbientLite.exe'
 $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'AmbientLite.lnk'
+$lifecycle = Join-Path $env:RUNNER_TEMP 'AmbientLite-lifecycle.log'
+$startupArguments = @('--startup','--lifecycle-log',('"' + $lifecycle + '"'))
 function Invoke-Checked([string]$File, [string[]]$Arguments) {
     Write-Output ("Checking: " + [IO.Path]::GetFileName($File) + ' ' + ($Arguments -join ' '))
     $installerLog = Join-Path $env:RUNNER_TEMP ('setup-' + [Guid]::NewGuid().ToString('N') + '.log')
@@ -16,6 +18,7 @@ function Invoke-Checked([string]$File, [string[]]$Arguments) {
     $process = Start-Process -FilePath $File -ArgumentList $Arguments -PassThru -WindowStyle Hidden -Wait
     if ($process.ExitCode -ne 0) {
         if (Test-Path -LiteralPath $installerLog) { Get-Content -LiteralPath $installerLog | Select-Object -Last 35 }
+        if (Test-Path -LiteralPath $lifecycle) { Get-Content -LiteralPath $lifecycle | Select-Object -Last 35 }
         throw "$File failed: $($process.ExitCode)"
     }
 }
@@ -41,7 +44,7 @@ Assert ((Get-ItemPropertyValue $runKey AmbientLite) -eq ('"' + $app + '" --start
 Invoke-Checked $app @('--startup-disable')
 Assert ($null -eq (Get-ItemProperty $runKey -Name AmbientLite -ErrorAction SilentlyContinue)) 'Startup toggle did not remove registration.'
 Invoke-Checked $app @('--startup-enable')
-$first = Start-Process -FilePath $app -ArgumentList '--startup' -WindowStyle Hidden -PassThru
+$first = Start-Process -FilePath $app -ArgumentList $startupArguments -WindowStyle Hidden -PassThru
 Start-Sleep -Seconds 3
 $first.Refresh()
 Assert (-not $first.HasExited) 'Tray startup exited unexpectedly.'
@@ -57,7 +60,7 @@ Assert ((Get-ItemPropertyValue $runKey AmbientLite) -eq ('"' + $app + '" --start
 # Repeatedly update as soon as the process exists, without waiting for its UI.
 foreach ($iteration in 1..3) {
     Write-Output "Checking update during startup: $iteration"
-    $starting = Start-Process -FilePath $app -ArgumentList '--startup' -WindowStyle Hidden -PassThru
+    $starting = Start-Process -FilePath $app -ArgumentList $startupArguments -WindowStyle Hidden -PassThru
     Wait-InstanceMutex $starting
     Invoke-Checked $setup @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
     Assert ($starting.WaitForExit(10000)) 'Update did not close a starting instance.'
@@ -65,7 +68,7 @@ foreach ($iteration in 1..3) {
 }
 $uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{20EE0678-1A5E-4872-91F6-70B9106B0B8A}_is1'
 Assert (Test-Path $uninstallKey) 'Windows Installed apps entry missing.'
-$active = Start-Process -FilePath $app -ArgumentList '--startup' -WindowStyle Hidden -PassThru
+$active = Start-Process -FilePath $app -ArgumentList $startupArguments -WindowStyle Hidden -PassThru
 Start-Sleep -Seconds 2
 Invoke-Checked (Join-Path $installed 'unins000.exe') @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
 Assert ($active.WaitForExit(10000)) 'Uninstall left the app running.'

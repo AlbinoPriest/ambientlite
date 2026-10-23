@@ -69,16 +69,20 @@ end;
 
 function StopInstalledApp(ShutdownHelper: String): String;
 var
-  ResultCode, Attempt: Integer;
-  Exe: String;
+  ResultCode, Attempt, Line: Integer;
+  Exe, TraceFile: String;
+  TraceLines: TArrayOfString;
 begin
   Result := '';
   Exe := ExpandConstant('{app}\AmbientLite.exe');
+  TraceFile := ExpandConstant('{tmp}\AmbientLite-shutdown.log');
   if FileExists(Exe) then begin
-    if not Exec(ShutdownHelper, '--shutdown', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    if not Exec(ShutdownHelper, '--shutdown --lifecycle-log "' + TraceFile + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       Result := 'Please exit AmbientLite from its tray controls, then try again.'
     else if ResultCode <> 0 then
       Result := 'AmbientLite is still closing. Exit it from its tray controls, then try again.';
+    if LoadStringsFromFile(TraceFile, TraceLines) then
+      for Line := 0 to GetArrayLength(TraceLines) - 1 do Log(TraceLines[Line]);
   end;
   if Result = '' then begin
     for Attempt := 1 to 50 do begin
