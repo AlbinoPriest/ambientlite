@@ -6,11 +6,25 @@
 
 Lightweight Windows ambient lighting for a Robobloq-compatible USB monitor strip.
 
-[Download for Windows](https://github.com/AlbinoPriest/ambientlite/releases/latest) · [My LED strip](https://www.aliexpress.com/item/1005007800056087.html) · [Build from source](#build-from-source) · [Report an issue](https://github.com/AlbinoPriest/ambientlite/issues)
+[**Download installer**](https://github.com/AlbinoPriest/ambientlite/releases/latest/download/AmbientLiteSetup.exe) · [Portable ZIP](https://github.com/AlbinoPriest/ambientlite/releases/latest/download/AmbientLite-windows-x64.zip) · [Releases](https://github.com/AlbinoPriest/ambientlite/releases/latest) · [Report an issue](https://github.com/AlbinoPriest/ambientlite/issues)
 
 </div>
 
 ![Screen sync: charcoal surfaces, coral controls, and adjustable brightness, smoothing, and refresh rate](docs/images/screen-sync.png)
+
+## Download and run
+
+**For most people: [download AmbientLiteSetup.exe](https://github.com/AlbinoPriest/ambientlite/releases/latest/download/AmbientLiteSetup.exe).** Run it, open AmbientLite from the Start menu, and exit SyncLight before starting the lights. No terminal, build tools, account, or administrator access is needed.
+
+| Download | Best for |
+|---|---|
+| [Windows installer](https://github.com/AlbinoPriest/ambientlite/releases/latest/download/AmbientLiteSetup.exe) | Everyday use. Start menu shortcut, Windows uninstall support, and preferences kept through updates. |
+| [Portable ZIP](https://github.com/AlbinoPriest/ambientlite/releases/latest/download/AmbientLite-windows-x64.zip) | Unzip into a writable folder and run `AmbientLite.exe`. Includes diagnostics, documentation, and licenses. |
+| [App EXE only](https://github.com/AlbinoPriest/ambientlite/releases/latest/download/AmbientLite.exe) | A single-file portable app. Saves `settings.txt` next to itself. |
+
+Requires **Windows 10/11 x64, .NET Framework 4.8, and a [compatible USB strip](#the-strip-i-use)**. Downloads are currently unsigned, so Windows may show a reputation warning. Get them from this repository's Releases page. [SHA-256 checksums](https://github.com/AlbinoPriest/ambientlite/releases/latest/download/SHA256SUMS.txt) are provided for each download.
+
+The installer and portable downloads run the same app. Installation adds no background service or updater.
 
 ## Why this exists
 
@@ -67,18 +81,33 @@ This is not a generic controller for every USB RGB strip. If yours differs, incl
 
 ## Get started
 
-1. Download the Windows x64 ZIP from [Releases](https://github.com/AlbinoPriest/ambientlite/releases/latest) and extract it into a writable folder.
+1. [Download and run the installer](https://github.com/AlbinoPriest/ambientlite/releases/latest/download/AmbientLiteSetup.exe), or extract the portable ZIP into a writable folder.
 2. Exit SyncLight from its tray icon. AmbientLite checks for it before starting so the two apps do not send competing colours.
-3. Run **AmbientLite.exe**. The app is portable and unsigned.
+3. Open **AmbientLite** from the Start menu, or run the portable **AmbientLite.exe**.
 4. In **Strip setup**, check LED counts and cable direction. Defaults match the tested 71-LED setup above.
 5. Choose **Screen sync** and select your monitor, or choose **Static colour** and pick a colour.
 6. Click **Start lighting**.
 
 **Test lights** sends dim blue to the configured strip. Brightness, colour, smoothing, and refresh rate update immediately. Pause before changing the monitor or physical layout.
 
-Preferences are stored in `settings.txt` beside the executable. Keep the folder writable. When updating, keep your settings file and replace the executables.
+The installed app stores preferences in `%LOCALAPPDATA%\AmbientLite\settings.txt`. Run a newer installer to update; it closes the installed app cleanly and preserves your settings. Remove it through **Windows Settings → Apps → Installed apps**. Uninstalling removes its shortcut and Windows startup entry, while retaining preferences for a later reinstall.
 
-Pausing leaves the last colour displayed. To use the supplied software again, exit AmbientLite and start SyncLight. AmbientLite does not change the controller's firmware or register itself to start with Windows.
+The portable app stores `settings.txt` beside its executable. Keep that folder writable. To update, exit the app and replace the executable, keeping `settings.txt`. To move from portable to installed, exit the portable copy, install AmbientLite, and copy its `settings.txt` into `%LOCALAPPDATA%\AmbientLite\` before opening the installed app. Only run one copy at a time.
+
+Pausing leaves the last colour displayed. To use the supplied software again, exit AmbientLite and start SyncLight. AmbientLite does not change the controller's firmware.
+
+## Ready when Windows is
+
+Open **Startup** in the app and enable **Start with Windows**. It is off by default. Two separate choices control what happens at sign-in:
+
+- **Keep the window in the tray:** start quietly; double-click the tray icon to open the full app.
+- **Start lighting at sign-in:** use your saved mode, colour, brightness, monitor, and strip layout automatically.
+
+![Startup preferences with separate Windows startup, tray, and lighting controls](docs/images/startup.png)
+
+These choices apply to Windows startup; opening the app yourself shows its window and waits for **Start lighting**. Registration is for the current Windows account only. You can also manage it in Windows Startup apps. Disable SyncLight's own startup entry to avoid both apps opening together.
+
+Portable users can enable the same feature, but must keep the executable at the same path. After moving it, open the app from the new folder and enable startup there. Disable startup before deleting a portable copy. The installer is the easier option if you want it running every day.
 
 ## Requirements and current limits
 
@@ -107,7 +136,16 @@ cd ambientlite
 
 `build.ps1` uses the framework compiler under `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319`. It produces the GUI app and console diagnostics executable in the repository directory. Git ignores binaries and local preferences.
 
-The Windows workflow builds both executables, runs the self-test, and uploads a portable ZIP.
+To build the installer, install [Inno Setup 7](https://jrsoftware.org/isinfo.php), then run:
+
+```powershell
+.\build-setup.ps1
+.\package.ps1
+```
+
+`build-setup.ps1 -Compiler C:\path\to\ISCC.exe` also accepts a portable compiler. `package.ps1` can run without Inno Setup to create portable downloads only.
+
+The Windows workflow compiles both executables and the installer, runs the protocol checks, and tests installation, startup registration, a running update, a running uninstall, and portable preferences in a disposable Windows runner. Download artifacts include the setup EXE, app EXE, portable ZIP, and checksums.
 
 | File | Purpose |
 |---|---|
@@ -115,6 +153,8 @@ The Windows workflow builds both executables, runs the self-test, and uploads a 
 | `LightWindow.cs` | Main UI, preferences, modes, lighting worker |
 | `ColourWheel.cs` | Colour wheel and HSV/RGB conversion |
 | `QuickControls.cs` | Tray panel and native title-bar colours |
+| `AppEnvironment.cs` / `StartupControls.cs` | Portable/installed storage, startup registration, and instance activation |
+| `installer.iss` / `build-setup.ps1` | Per-user installer, shortcuts, updates, and uninstall |
 | `AmbientLite.xaml` / `TrayFlyout.xaml` | Main and tray interface |
 | `Documentation.cs` | Render UI images without starting USB output |
 
@@ -123,6 +163,9 @@ The Windows workflow builds both executables, runs the self-test, and uploads a 
 ```powershell
 # Pure checks; no controller required
 .\AmbientLite.Diagnostics.exe --self-test
+
+# Included open-source notices
+.\AmbientLite.Diagnostics.exe --licenses
 
 # Inspect matching controller/report size; no colour output
 .\AmbientLite.Diagnostics.exe --probe

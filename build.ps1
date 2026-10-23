@@ -8,7 +8,10 @@ foreach ($kind in @('winexe','exe')) {
  $arguments += '/resource:'+(Join-Path $PSScriptRoot 'AmbientLite.xaml')+',Ambient.UI'
  $arguments += '/resource:'+(Join-Path $PSScriptRoot 'AmbientLite.ico')+',Ambient.Icon'
  $arguments += '/resource:'+(Join-Path $PSScriptRoot 'TrayFlyout.xaml')+',Ambient.Tray'
+ $arguments += '/resource:'+(Join-Path $PSScriptRoot 'LICENSE')+',Ambient.License'
+ $arguments += '/resource:'+(Join-Path $PSScriptRoot 'SwooshDrop-LICENSE.txt')+',Ambient.SwooshLicense'
  $arguments += (Join-Path $PSScriptRoot 'AmbientLite.cs'),(Join-Path $PSScriptRoot 'LightWindow.cs'),(Join-Path $PSScriptRoot 'ColourWheel.cs'),(Join-Path $PSScriptRoot 'QuickControls.cs'),(Join-Path $PSScriptRoot 'Documentation.cs')
+ $arguments += (Join-Path $PSScriptRoot 'AppEnvironment.cs'),(Join-Path $PSScriptRoot 'StartupControls.cs')
  & $compiler @arguments
  if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
 }

@@ -183,6 +183,7 @@
     <Button x:Name="LightingNav" Content="Screen sync" HorizontalContentAlignment="Left" Padding="14,12" Background="#292D33" BorderThickness="0" Margin="0,0,0,6"/>
     <Button x:Name="ColourNav" Content="Static colour" HorizontalContentAlignment="Left" Padding="14,12" Background="Transparent" BorderThickness="0" Foreground="#B2B0B0" Margin="0,0,0,6"/>
     <Button x:Name="SetupNav" Content="Strip setup" HorizontalContentAlignment="Left" Padding="14,12" Background="Transparent" BorderThickness="0" Foreground="#B2B0B0"/>
+    <Button x:Name="StartupNav" Content="Startup" HorizontalContentAlignment="Left" Padding="14,12" Background="Transparent" BorderThickness="0" Foreground="#B2B0B0" Margin="0,6,0,0"/>
    </StackPanel>
    <StackPanel Grid.Row="2">
     <Border BorderBrush="#363A41" BorderThickness="0,1,0,0" Padding="8,18,4,0">
@@ -294,6 +295,28 @@
    <Border Grid.Row="2" BorderBrush="#363A41" BorderThickness="0,1,0,0" Margin="0,18,0,0" Padding="0,14,0,0">
     <Grid><StackPanel><TextBlock Text="Everything connected?" FontSize="14"/><TextBlock Text="Send a soft blue to every light to check your strip." FontSize="11" Foreground="#B2B0B0" Margin="0,6,0,0"/></StackPanel><Button x:Name="TestButton" Content="Test lights" HorizontalAlignment="Right" VerticalAlignment="Center" HorizontalContentAlignment="Center"/></Grid>
    </Border>
+  </Grid>
+  <Grid Grid.Row="2" x:Name="StartupPage" Visibility="Collapsed">
+   <StackPanel>
+    <TextBlock Text="MAKE YOURSELF AT HOME" FontSize="10" Foreground="#B2B0B0" Margin="0,0,0,12"/>
+    <Border Background="#202328" CornerRadius="18" Padding="22,18">
+     <StackPanel>
+      <TextBlock Text="An easy beginning." FontFamily="Georgia" FontSize="23" Margin="0,0,0,12"/>
+      <CheckBox x:Name="StartWithWindows" Content="Start with Windows"/>
+      <TextBlock Text="Open AmbientLite when you sign in to this Windows account." FontSize="12" Foreground="#B2B0B0" Margin="34,0,0,16" TextWrapping="Wrap"/>
+      <Border BorderBrush="#363A41" BorderThickness="0,1,0,0" Padding="0,12,0,0">
+       <StackPanel>
+        <CheckBox x:Name="TrayAtStartup" Content="Keep the window in the tray"/>
+        <TextBlock Text="A quiet start. Double-click the tray icon to open the app." FontSize="12" Foreground="#B2B0B0" Margin="34,0,0,12" TextWrapping="Wrap"/>
+        <CheckBox x:Name="LightingAtStartup" Content="Start lighting at sign-in"/>
+        <TextBlock Text="Use your saved mode, colour, brightness, and screen settings." FontSize="12" Foreground="#B2B0B0" Margin="34,0,0,0" TextWrapping="Wrap"/>
+       </StackPanel>
+      </Border>
+     </StackPanel>
+    </Border>
+    <TextBlock x:Name="StartupStatus" Text="Tray and lighting choices apply when Windows starts the app." FontSize="12" Foreground="#F39485" TextWrapping="Wrap" Margin="4,17,4,0"/>
+    <TextBlock x:Name="StorageDetail" Text="Your preferences stay with you through updates." FontSize="11" Foreground="#B2B0B0" TextWrapping="Wrap" Margin="4,10,4,0"/>
+   </StackPanel>
   </Grid>
   <Grid Grid.Row="3" Margin="0,22,0,0"><TextBlock Text="Closing this window keeps lighting in the tray." FontSize="10" Foreground="#85878C"/><TextBlock x:Name="RunStats" Text="Local. Quiet. Yours." HorizontalAlignment="Right" FontSize="10" Foreground="#85878C"/></Grid>
  </Grid>

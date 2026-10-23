@@ -39,7 +39,7 @@ sealed partial class LightWindow {
    flyout.PreviewKeyDown+=(s,e)=>{if(e.Key==System.Windows.Input.Key.Escape){HideQuick();e.Handled=true;}};
    Quick<Button>("QuickClose").Click+=(s,e)=>HideQuick();
    Quick<Button>("QuickOpen").Click+=(s,e)=>Show();
-   Quick<Button>("QuickExit").Click+=async(s,e)=>{exiting=true;HideQuick();await Stop();window.Close();};
+   Quick<Button>("QuickExit").Click+=async(s,e)=>await ExitApplication();
    Quick<Button>("QuickToggle").Click+=async(s,e)=>{Quick<Button>("QuickToggle").IsEnabled=false;if(IsRunning)await Stop();else await Start(false);UpdateQuick();};
    Quick<RadioButton>("QuickScreen").Checked+=(s,e)=>{if(!refreshingQuick)Navigate("Lighting");};
    Quick<RadioButton>("QuickStatic").Checked+=(s,e)=>{if(!refreshingQuick)Navigate("Colour");};
