@@ -9,9 +9,15 @@ $runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
 $app = Join-Path $installed 'AmbientLite.exe'
 $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'AmbientLite.lnk'
 function Invoke-Checked([string]$File, [string[]]$Arguments) {
+    Write-Output ("Checking: " + [IO.Path]::GetFileName($File) + ' ' + ($Arguments -join ' '))
+    $installerLog = Join-Path $env:RUNNER_TEMP ('setup-' + [Guid]::NewGuid().ToString('N') + '.log')
+    if ([IO.Path]::GetFileName($File) -eq 'AmbientLiteSetup.exe') { $Arguments += '/LOG="' + $installerLog + '"' }
     $process = Start-Process -FilePath $File -ArgumentList $Arguments -PassThru -WindowStyle Hidden
     if (-not $process.WaitForExit(30000)) { throw "Timed out: $File" }
-    if ($process.ExitCode -ne 0) { throw "$File failed: $($process.ExitCode)" }
+    if ($process.ExitCode -ne 0) {
+        if (Test-Path -LiteralPath $installerLog) { Get-Content -LiteralPath $installerLog | Select-Object -Last 35 }
+        throw "$File failed: $($process.ExitCode)"
+    }
 }
 function Assert([bool]$Condition, [string]$Message) { if (-not $Condition) { throw $Message } }
 Invoke-Checked $setup @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
