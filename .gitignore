@@ -1,0 +1,20 @@
+# Local preferences and generated files
+settings.txt
+*.exe
+*.pdb
+*.log
+*.csv
+*.zip
+*.sha256
+dist/
+obj/
+bin/
+.vs/
+.idea/
+
+# Temporary and operating-system files
+*.tmp
+*.bak
+Thumbs.db
+Desktop.ini
+.DS_Store

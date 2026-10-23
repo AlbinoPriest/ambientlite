@@ -1,0 +1,32 @@
+name: Windows build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile app and diagnostics
+        shell: powershell
+        run: ./build.ps1
+      - name: Check protocol and colour conversion
+        shell: powershell
+        run: |
+          & ./AmbientLite.Diagnostics.exe --self-test
+          if ($LASTEXITCODE -ne 0) { throw 'Self-test failed' }
+      - name: Package portable app
+        shell: powershell
+        run: ./package.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AmbientLite-windows-x64
+          path: |
+            dist/AmbientLite-windows-x64.zip
+            dist/AmbientLite-windows-x64.zip.sha256
