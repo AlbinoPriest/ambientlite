@@ -68,7 +68,7 @@ end;
 
 function StopInstalledApp: String;
 var
-  ResultCode: Integer;
+  ResultCode, Attempt: Integer;
   Exe: String;
 begin
   Result := '';
@@ -79,8 +79,13 @@ begin
     else if ResultCode <> 0 then
       Result := 'AmbientLite is still closing. Exit it from its tray controls, then try again.';
   end;
-  if (Result = '') and CheckForMutexes('Local\AmbientLite.Robobloq') then
+  if Result = '' then begin
+    for Attempt := 1 to 50 do begin
+      if not CheckForMutexes('Local\AmbientLite.Robobloq') then Exit;
+      Sleep(100);
+    end;
     Result := 'Please exit the running copy of AmbientLite from its tray controls, then try again.';
+  end;
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
@@ -109,8 +114,8 @@ var
   Command: String;
 begin
   if CurUninstallStep = usPostUninstall then begin
-    if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'AmbientLite', Command) then
+    if RegQueryStringValue(HKCU64, 'Software\Microsoft\Windows\CurrentVersion\Run', 'AmbientLite', Command) then
       if CompareText(Command, '"' + ExpandConstant('{app}\AmbientLite.exe') + '" --startup') = 0 then
-        RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'AmbientLite');
+        RegDeleteValue(HKCU64, 'Software\Microsoft\Windows\CurrentVersion\Run', 'AmbientLite');
   end;
 end;
