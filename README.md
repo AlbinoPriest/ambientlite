@@ -145,7 +145,7 @@ To build the installer, install [Inno Setup 7](https://jrsoftware.org/isinfo.php
 
 `build-setup.ps1 -Compiler C:\path\to\ISCC.exe` also accepts a portable compiler. `package.ps1` can run without Inno Setup to create portable downloads only.
 
-The Windows workflow compiles both executables and the installer, runs the protocol checks, and tests installation, startup registration, a running update, a running uninstall, and portable preferences in a disposable Windows runner. Download artifacts include the setup EXE, app EXE, portable ZIP, and checksums.
+The Windows workflow compiles both executables and the installer, runs protocol and delayed-startup shutdown regression checks, and tests installation, startup registration, updating a running or still-starting app, a running uninstall, and portable preferences in a disposable Windows runner. Download artifacts include the setup EXE, app EXE, portable ZIP, and checksums.
 
 | File | Purpose |
 |---|---|

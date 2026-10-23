@@ -20,6 +20,16 @@ function Invoke-Checked([string]$File, [string[]]$Arguments) {
     }
 }
 function Assert([bool]$Condition, [string]$Message) { if (-not $Condition) { throw $Message } }
+function Wait-InstanceMutex([Diagnostics.Process]$Process) {
+    $deadline = [DateTime]::UtcNow.AddSeconds(10)
+    while ([DateTime]::UtcNow -lt $deadline) {
+        Assert (-not $Process.HasExited) 'Starting app exited before acquiring its instance mutex.'
+        $handle = $null
+        if ([Threading.Mutex]::TryOpenExisting('Local\AmbientLite.Robobloq', [ref]$handle)) { $handle.Dispose(); return }
+        Start-Sleep -Milliseconds 25
+    }
+    throw 'Starting app did not acquire its instance mutex.'
+}
 Invoke-Checked $setup @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
 Assert (Test-Path -LiteralPath $app) 'App was not installed.'
 Assert (Test-Path -LiteralPath (Join-Path $installed 'installed.marker')) 'Installed edition marker missing.'
@@ -44,6 +54,15 @@ Assert ($first.WaitForExit(10000)) 'Update did not close the running app.'
 Assert (([IO.File]::ReadAllText($preferences)) -eq $saved) 'Update changed preferences.'
 Assert (Test-Path -LiteralPath $shortcut) 'Start menu shortcut missing.'
 Assert ((Get-ItemPropertyValue $runKey AmbientLite) -eq ('"' + $app + '" --startup')) 'Update removed startup preference.'
+# Repeatedly update as soon as the process exists, without waiting for its UI.
+foreach ($iteration in 1..3) {
+    Write-Output "Checking update during startup: $iteration"
+    $starting = Start-Process -FilePath $app -ArgumentList '--startup' -WindowStyle Hidden -PassThru
+    Wait-InstanceMutex $starting
+    Invoke-Checked $setup @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
+    Assert ($starting.WaitForExit(10000)) 'Update did not close a starting instance.'
+    Assert (([IO.File]::ReadAllText($preferences)) -eq $saved) 'Update during startup changed preferences.'
+}
 $uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{20EE0678-1A5E-4872-91F6-70B9106B0B8A}_is1'
 Assert (Test-Path $uninstallKey) 'Windows Installed apps entry missing.'
 $active = Start-Process -FilePath $app -ArgumentList '--startup' -WindowStyle Hidden -PassThru
@@ -72,4 +91,4 @@ Assert ($portableProcess.WaitForExit(10000)) 'Portable shutdown failed.'
 Assert (([IO.File]::ReadAllLines($portableSettings))[2] -eq '23') 'Portable app did not retain its local preferences.'
 Assert (([IO.File]::ReadAllText($preferences)) -eq $saved) 'Portable app touched installed preferences.'
 Invoke-Checked $portableApp @('--startup-disable')
-Write-Output 'Install, startup, running update, running uninstall, and portable preference checks passed.'
+Write-Output 'Install, startup, running update, three updates during startup, running uninstall, and portable preference checks passed.'

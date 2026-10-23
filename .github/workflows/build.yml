@@ -22,6 +22,9 @@ jobs:
         run: |
           & ./AmbientLite.Diagnostics.exe --self-test
           if ($LASTEXITCODE -ne 0) { throw 'Self-test failed' }
+      - name: Check shutdown during delayed startup
+        shell: powershell
+        run: ./tests/session.ps1
       - name: Prepare installer compiler
         shell: powershell
         run: |

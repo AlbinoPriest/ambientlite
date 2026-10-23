@@ -1,4 +1,4 @@
-#define AppVersion "0.2.0"
+#define AppVersion "0.2.1"
 
 [Setup]
 AppId={{20EE0678-1A5E-4872-91F6-70B9106B0B8A}
@@ -30,13 +30,14 @@ RestartApplications=no
 UninstallDisplayName=AmbientLite
 VersionInfoDescription=AmbientLite Setup
 VersionInfoProductName=AmbientLite
-VersionInfoVersion=0.2.0.0
+VersionInfoVersion=0.2.1.0
 
 [Tasks]
 Name: desktopicon; Description: "Create a &desktop shortcut"; Flags: unchecked
 
 [Files]
 Source: AmbientLite.exe; DestDir: "{app}"; Flags: ignoreversion
+Source: AmbientLite.exe; DestName: AmbientLite.Shutdown.exe; Flags: dontcopy
 Source: AmbientLite.Diagnostics.exe; DestDir: "{app}"; Flags: ignoreversion
 Source: LICENSE; DestDir: "{app}"; Flags: ignoreversion
 Source: SwooshDrop-LICENSE.txt; DestDir: "{app}"; Flags: ignoreversion
@@ -66,7 +67,7 @@ begin
     SuppressibleMsgBox('AmbientLite needs Microsoft .NET Framework 4.8 or later. Install it from Microsoft, then run setup again.', mbCriticalError, MB_OK, IDOK);
 end;
 
-function StopInstalledApp: String;
+function StopInstalledApp(ShutdownHelper: String): String;
 var
   ResultCode, Attempt: Integer;
   Exe: String;
@@ -74,7 +75,7 @@ begin
   Result := '';
   Exe := ExpandConstant('{app}\AmbientLite.exe');
   if FileExists(Exe) then begin
-    if not Exec(Exe, '--shutdown', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    if not Exec(ShutdownHelper, '--shutdown', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       Result := 'Please exit AmbientLite from its tray controls, then try again.'
     else if ResultCode <> 0 then
       Result := 'AmbientLite is still closing. Exit it from its tray controls, then try again.';
@@ -90,14 +91,16 @@ end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
-  Result := StopInstalledApp;
+  { Use this installer's fixed helper even when upgrading an older app. }
+  ExtractTemporaryFile('AmbientLite.Shutdown.exe');
+  Result := StopInstalledApp(ExpandConstant('{tmp}\AmbientLite.Shutdown.exe'));
 end;
 
 function InitializeUninstall: Boolean;
 var
   Problem: String;
 begin
-  Problem := StopInstalledApp;
+  Problem := StopInstalledApp(ExpandConstant('{app}\AmbientLite.exe'));
   Result := Problem = '';
   if not Result and not UninstallSilent then MsgBox(Problem, mbError, MB_OK);
 end;
