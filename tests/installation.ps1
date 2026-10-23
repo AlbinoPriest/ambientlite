@@ -11,9 +11,9 @@ $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'AmbientLite.ln
 function Invoke-Checked([string]$File, [string[]]$Arguments) {
     Write-Output ("Checking: " + [IO.Path]::GetFileName($File) + ' ' + ($Arguments -join ' '))
     $installerLog = Join-Path $env:RUNNER_TEMP ('setup-' + [Guid]::NewGuid().ToString('N') + '.log')
-    if ([IO.Path]::GetFileName($File) -eq 'AmbientLiteSetup.exe') { $Arguments += '/LOG="' + $installerLog + '"' }
-    $process = Start-Process -FilePath $File -ArgumentList $Arguments -PassThru -WindowStyle Hidden
-    if (-not $process.WaitForExit(30000)) { throw "Timed out: $File" }
+    if ([IO.Path]::GetFileName($File) -match '^(AmbientLiteSetup|unins000)\.exe$') { $Arguments += '/LOG="' + $installerLog + '"' }
+    # -Wait includes the temporary child used by the self-removing uninstaller.
+    $process = Start-Process -FilePath $File -ArgumentList $Arguments -PassThru -WindowStyle Hidden -Wait
     if ($process.ExitCode -ne 0) {
         if (Test-Path -LiteralPath $installerLog) { Get-Content -LiteralPath $installerLog | Select-Object -Last 35 }
         throw "$File failed: $($process.ExitCode)"
