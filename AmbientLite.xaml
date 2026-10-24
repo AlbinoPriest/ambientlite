@@ -279,7 +279,7 @@
  </Grid>
 </Grid>
   <Grid Grid.Row="2" x:Name="SetupPage" Visibility="Collapsed">
-   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <TextBlock Text="MAKE THE CONNECTION" FontSize="10" Foreground="#B2B0B0" Margin="0,0,0,12"/>
    <Border Grid.Row="1" Background="#202328" CornerRadius="18" Padding="20">
     <StackPanel><TextBlock Text="Around your screen." FontFamily="Georgia" FontSize="23"/><TextBlock Text="A three-sided strip, with the same number of lights on each side." Foreground="#B2B0B0" FontSize="12" Margin="0,8,0,16"/>
@@ -295,6 +295,7 @@
    <Border Grid.Row="2" BorderBrush="#363A41" BorderThickness="0,1,0,0" Margin="0,18,0,0" Padding="0,14,0,0">
     <Grid><StackPanel><TextBlock Text="Everything connected?" FontSize="14"/><TextBlock Text="Send a soft blue to every light to check your strip." FontSize="11" Foreground="#B2B0B0" Margin="0,6,0,0"/></StackPanel><Button x:Name="TestButton" Content="Test lights" HorizontalAlignment="Right" VerticalAlignment="Center" HorizontalContentAlignment="Center"/></Grid>
    </Border>
+   <Grid Grid.Row="3" Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions><CheckBox x:Name="CompatibilityCapture" Content="Compatibility capture"/><TextBlock Grid.Column="1" Text="Only if smooth capture doesn't work. May cause desktop hitches." Foreground="#B2B0B0" FontSize="11" TextWrapping="Wrap" Margin="18,0,0,0" VerticalAlignment="Center"/></Grid>
   </Grid>
   <Grid Grid.Row="2" x:Name="StartupPage" Visibility="Collapsed">
    <StackPanel>

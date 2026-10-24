@@ -25,6 +25,11 @@ jobs:
       - name: Check shutdown during delayed startup
         shell: powershell
         run: ./tests/session.ps1
+      - name: Check GPU downsampling and readback
+        shell: powershell
+        run: |
+          & ./AmbientLite.Diagnostics.exe --capture-self-test
+          if ($LASTEXITCODE -ne 0) { throw 'GPU capture test failed' }
       - name: Prepare installer compiler
         shell: powershell
         run: |

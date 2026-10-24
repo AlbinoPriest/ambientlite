@@ -12,6 +12,8 @@ foreach ($kind in @('winexe','exe')) {
  $arguments += '/resource:'+(Join-Path $PSScriptRoot 'SwooshDrop-LICENSE.txt')+',Ambient.SwooshLicense'
  $arguments += (Join-Path $PSScriptRoot 'AmbientLite.cs'),(Join-Path $PSScriptRoot 'LightWindow.cs'),(Join-Path $PSScriptRoot 'ColourWheel.cs'),(Join-Path $PSScriptRoot 'QuickControls.cs'),(Join-Path $PSScriptRoot 'Documentation.cs')
  $arguments += (Join-Path $PSScriptRoot 'AppEnvironment.cs'),(Join-Path $PSScriptRoot 'StartupControls.cs')
+ $arguments += (Join-Path $PSScriptRoot 'DesktopCapture.cs')
+ $arguments += (Join-Path $PSScriptRoot 'CaptureDiagnostics.cs')
  & $compiler @arguments
  if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
 }

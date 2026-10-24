@@ -17,7 +17,9 @@ sealed partial class LightWindow {
   startWithWindows.Checked+=(s,e)=>ChangeStartup(true);startWithWindows.Unchecked+=(s,e)=>ChangeStartup(false);
   trayAtStartup.Checked+=(s,e)=>SaveStartupChoices();trayAtStartup.Unchecked+=(s,e)=>SaveStartupChoices();
   lightingAtStartup.Checked+=(s,e)=>SaveStartupChoices();lightingAtStartup.Unchecked+=(s,e)=>SaveStartupChoices();
+  bool firstLaunch=true;
   window.Loaded+=async(s,e)=>{
+   if(!firstLaunch)return;firstLaunch=false;
    LifecycleTrace.Write("Window loaded");
    bool startup=Environment.GetCommandLineArgs().Contains("--startup");
    if(startup&&startInTray){window.Hide();window.Opacity=1;}

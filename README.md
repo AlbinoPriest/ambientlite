@@ -38,7 +38,7 @@ The WPF interface measured about **138 MB of working memory and 1.01% CPU** in a
 
 ## Two ways to light your space
 
-**Screen sync** samples a selected monitor's edges and follows the colours on screen. Adjust brightness, smoothing, and refresh rate while it runs. A 20 fps target is the default; actual capture rate depends on the system and workload.
+**Screen sync** samples a selected monitor's edges and follows the colours on screen. GPU capture is the default: the desktop is reduced on the GPU, and colour readback skips busy buffers instead of waiting for them. Adjust brightness, smoothing, and refresh rate while it runs. A 20 fps target is the default; actual capture rate depends on the system and workload.
 
 **Static colour** gives the whole strip one steady colour. Drag the wheel, choose a preset, and adjust brightness. Static mode stops screen capture and waits for changes instead of sampling continuously.
 
@@ -90,6 +90,8 @@ This is not a generic controller for every USB RGB strip. If yours differs, incl
 
 **Test lights** sends dim blue to the configured strip. Brightness, colour, smoothing, and refresh rate update immediately. Pause before changing the monitor or physical layout.
 
+Leave **Compatibility capture** in **Strip setup** off for normal use. Enable it only if GPU capture cannot read your display, for example with a rotated monitor or an unsupported display driver. It uses the older GDI path, which can cause desktop hitches. The app's footer shows which capture path is active. See the [capture timing comparison](docs/PERFORMANCE.md#desktop-smoothness).
+
 The installed app stores preferences in `%LOCALAPPDATA%\AmbientLite\settings.txt`. Run a newer installer to update; it closes the installed app cleanly and preserves your settings. Remove it through **Windows Settings → Apps → Installed apps**. Uninstalling removes its shortcut and Windows startup entry, while retaining preferences for a later reinstall.
 
 The portable app stores `settings.txt` beside its executable. Keep that folder writable. To update, exit the app and replace the executable, keeping `settings.txt`. To move from portable to installed, exit the portable copy, install AmbientLite, and copy its `settings.txt` into `%LOCALAPPDATA%\AmbientLite\` before opening the installed app. Only run one copy at a time.
@@ -115,7 +117,7 @@ Portable users can enable the same feature, but must keep the executable at the 
 - A compatible USB HID controller as described above.
 - Three sides with equal vertical lengths, up to 254 LEDs total.
 
-Capture currently uses GDI and **does not implement HDR tone mapping**. HDR, protected video, exclusive fullscreen content, or a locked desktop can produce incorrect/black colours or a capture error. Start with SDR desktop or windowed content.
+Capture uses Direct3D 11 Desktop Duplication by default and **does not implement HDR tone mapping**. HDR, protected video, exclusive fullscreen content, or a locked desktop can produce incorrect/black colours or a capture error. Start with SDR desktop or windowed content. The GPU path attempts to reconnect after capture access is lost; monitor layout changes can still require selecting the screen again.
 
 There is no automatic black-bar detection, RGB-order selection, four-sided layout, audio mode, or automatic USB reconnect yet. After reconnecting the controller, start lighting again. Restart after changing monitor configuration. The monitor illustration is decorative, not a live preview.
 
@@ -150,6 +152,7 @@ The Windows workflow compiles both executables and the installer, runs protocol 
 | File | Purpose |
 |---|---|
 | `AmbientLite.cs` | USB transport, capture, protocol, entry point, diagnostics |
+| `DesktopCapture.cs` / `CaptureDiagnostics.cs` | GPU downsampling, nonblocking readback, compatibility capture, and capture profiling |
 | `LightWindow.cs` | Main UI, preferences, modes, lighting worker |
 | `ColourWheel.cs` | Colour wheel and HSV/RGB conversion |
 | `QuickControls.cs` | Tray panel and native title-bar colours |
@@ -166,6 +169,13 @@ The Windows workflow compiles both executables and the installer, runs protocol 
 
 # Included open-source notices
 .\AmbientLite.Diagnostics.exe --licenses
+
+# GPU resize/readback checks using WARP; no screen capture or USB output
+.\AmbientLite.Diagnostics.exe --capture-self-test
+
+# Capture-only timing samples; no USB output. Close the running app first.
+.\AmbientLite.Diagnostics.exe --capture-profile --seconds 10
+.\AmbientLite.Diagnostics.exe --capture-profile --compatibility --seconds 10
 
 # Inspect matching controller/report size; no colour output
 .\AmbientLite.Diagnostics.exe --probe
@@ -191,7 +201,9 @@ Regenerate the documentation images without starting capture or USB output:
 
 ## How it works
 
-Screen sync captures into a reused **256 × 128** surface, averages edge bands, smooths the result, and sends RGB frames directly over HID. Duplicate screen frames are suppressed except for a one-second refresh. Static mode releases the capture surface and sends changes to the chosen colour or brightness.
+Screen sync receives a desktop texture through DXGI, downsamples it to **256 × 128** with a Direct3D 11 compute shader, then reads a completed staging buffer with `DO_NOT_WAIT`. Three reusable readback buffers prevent a busy copy from forcing a synchronous CPU/GPU wait. The desktop stays on the GPU until it has been reduced; only the small colour surface is copied to the CPU. The previous duplication frame is held between samples so Windows can coalesce updates.
+
+The app averages edge bands, smooths the result, and sends RGB frames directly over HID. Duplicate LED-colour frames are suppressed except for a one-second refresh. If the GPU is busy, lighting can use an older completed sample; this trades some lighting latency for desktop responsiveness. Static mode releases capture and waits for setting changes. The compatibility path uses GDI instead.
 
 USB writes are serialized and bounded by a timeout. During normal use, screen pixels stay in memory; the app does not save or upload them. No vendor DLLs, firmware images, or application bundles are included.
 

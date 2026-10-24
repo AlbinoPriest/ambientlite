@@ -15,7 +15,9 @@ function Invoke-Checked([string]$File, [string[]]$Arguments) {
     $installerLog = Join-Path $env:RUNNER_TEMP ('setup-' + [Guid]::NewGuid().ToString('N') + '.log')
     if ([IO.Path]::GetFileName($File) -match '^(AmbientLiteSetup|unins000)\.exe$') { $Arguments += '/LOG="' + $installerLog + '"' }
     # -Wait includes the temporary child used by the self-removing uninstaller.
-    $process = Start-Process -FilePath $File -ArgumentList $Arguments -PassThru -WindowStyle Hidden -Wait
+    $launch = @{FilePath=$File;PassThru=$true;WindowStyle='Hidden';Wait=$true}
+    if ($Arguments.Count -gt 0) { $launch.ArgumentList = $Arguments }
+    $process = Start-Process @launch
     if ($process.ExitCode -ne 0) {
         if (Test-Path -LiteralPath $installerLog) { Get-Content -LiteralPath $installerLog | Select-Object -Last 35 }
         if (Test-Path -LiteralPath $lifecycle) { Get-Content -LiteralPath $lifecycle | Select-Object -Last 35 }
@@ -50,6 +52,19 @@ $first.Refresh()
 Assert (-not $first.HasExited) 'Tray startup exited unexpectedly.'
 Assert ($first.MainWindowHandle -eq 0) 'Start-in-tray showed a main window.'
 Invoke-Checked $app @('--startup')
+# Wait for preference migration, rather than assuming WPF initialization is fast.
+$readyDeadline = [DateTime]::UtcNow.AddSeconds(30)
+while (([IO.File]::ReadAllLines($preferences)).Count -lt 12 -and [DateTime]::UtcNow -lt $readyDeadline) { Start-Sleep -Milliseconds 50 }
+Assert (([IO.File]::ReadAllLines($preferences)).Count -ge 12) 'Older preferences were not migrated.'
+Assert (([IO.File]::ReadAllLines($preferences))[11] -eq 'False') 'Smooth capture was not the default for older preferences.'
+# Opening the EXE must restore a copy originally started in the tray.
+Invoke-Checked $app @()
+$restoreDeadline = [DateTime]::UtcNow.AddSeconds(10)
+do { $first.Refresh(); if ($first.MainWindowHandle -ne 0) { break }; Start-Sleep -Milliseconds 50 } while ([DateTime]::UtcNow -lt $restoreDeadline)
+Assert ($first.MainWindowHandle -ne 0) 'Opening the app did not restore its tray window.'
+Start-Sleep -Milliseconds 300
+$first.Refresh()
+Assert ($first.MainWindowHandle -ne 0) 'The startup Loaded handler hid the restored window again.'
 $saved = [IO.File]::ReadAllText($preferences)
 # Updating a running installation must stop it gracefully and retain choices.
 Invoke-Checked $setup @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
