@@ -40,7 +40,7 @@ sealed partial class LightWindow {
   sync.Click+=async(s,e)=>{if(IsRunning)await Stop();else await Start(false);};test.Click+=async(s,e)=>await Start(true);
   tray=new Forms.NotifyIcon{Text="AmbientLite · Ready",Visible=!renderingDocumentation};SetIcon(false);SetupQuickControls();
   window.StateChanged+=(s,e)=>{if(window.WindowState==WindowState.Minimized)window.Hide();};
-  window.Closing+=(s,e)=>{if(!exiting){e.Cancel=true;SaveIfValid();window.Hide();}else if(exitLighting!=null&&!exitLighting.IsCompleted){e.Cancel=true;}else{SaveIfValid();statsTimer.Stop();tray.Visible=false;var icon=tray.Icon;tray.Dispose();if(icon!=null)icon.Dispose();}};
+  window.Closing+=(s,e)=>{if(!exiting){e.Cancel=true;SaveIfValid();window.Hide();}else if(!endingSession&&exitLighting!=null&&!exitLighting.IsCompleted){e.Cancel=true;}else{SaveIfValid();statsTimer.Stop();tray.Visible=false;var icon=tray.Icon;tray.Dispose();if(icon!=null)icon.Dispose();}};
   window.IsVisibleChanged+=(s,e)=>{Interlocked.Exchange(ref frameCount,0);if(window.IsVisible)statsTimer.Start();else statsTimer.Stop();};
   statsTimer=new DispatcherTimer{Interval=TimeSpan.FromSeconds(1)};statsTimer.Tick+=(s,e)=>{int count=Interlocked.Exchange(ref frameCount,0);Text("RunStats",IsRunning&&!testing?(liveMode==1?"Static colour  ·  USB connected":count+" fps  ·  "+(compatibilityCapture.IsChecked==true?"Compatibility capture":"GPU capture")):"Local. Quiet. Yours.");};statsTimer.Start();
   UpdateLayout();if(liveMode==1)Navigate("Colour");

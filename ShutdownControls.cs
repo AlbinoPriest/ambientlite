@@ -10,7 +10,7 @@ using System.Windows.Threading;
 using Drawing=System.Drawing;
 
 sealed partial class LightWindow {
- bool turnOffOnExit=true;int configuredLights=71;CheckBox offAtExit;Task<bool> exitLighting;
+ bool turnOffOnExit=true,endingSession;int configuredLights=71;CheckBox offAtExit;Task<bool> exitLighting;
  void SetupShutdown(){
   offAtExit=Get<CheckBox>("OffAtExit");offAtExit.IsChecked=turnOffOnExit;
   offAtExit.Checked+=(s,e)=>{turnOffOnExit=true;SaveIfValid();};offAtExit.Unchecked+=(s,e)=>{turnOffOnExit=false;SaveIfValid();};
@@ -37,10 +37,10 @@ sealed partial class LightWindow {
   LifecycleTrace.Write("Lights-off frames sent for "+count+" LEDs");
  }
  void PrepareForWindowsShutdown(){
-  LifecycleTrace.Write("Windows session ending");exiting=true;HideQuick();SaveIfValid();
+  LifecycleTrace.Write("Windows session ending");endingSession=exiting=true;HideQuick();SaveIfValid();
   // The worker's pending dispatcher operation is cancellable; this bounded wait
   // does not need the blocked UI thread to finish capture or send the black frame.
-  try{PrepareExitLighting().GetAwaiter().GetResult();}catch(Exception ex){LifecycleTrace.Write("Session cleanup: "+ex.Message);}
+  try{if(!PrepareExitLighting().Wait(ShutdownLighting.BudgetMilliseconds))LifecycleTrace.Write("Windows session cleanup wait expired");}catch(Exception ex){LifecycleTrace.Write("Session cleanup: "+ex.Message);}
  }
  public void RequestSessionEndTest(){window.Dispatcher.BeginInvoke(new Action(()=>{PrepareForWindowsShutdown();window.Close();}),DispatcherPriority.ContextIdle);}
 }
