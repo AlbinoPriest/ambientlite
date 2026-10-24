@@ -54,9 +54,10 @@ Assert ($first.MainWindowHandle -eq 0) 'Start-in-tray showed a main window.'
 Invoke-Checked $app @('--startup')
 # Wait for preference migration, rather than assuming WPF initialization is fast.
 $readyDeadline = [DateTime]::UtcNow.AddSeconds(30)
-while (([IO.File]::ReadAllLines($preferences)).Count -lt 12 -and [DateTime]::UtcNow -lt $readyDeadline) { Start-Sleep -Milliseconds 50 }
-Assert (([IO.File]::ReadAllLines($preferences)).Count -ge 12) 'Older preferences were not migrated.'
+while (([IO.File]::ReadAllLines($preferences)).Count -lt 13 -and [DateTime]::UtcNow -lt $readyDeadline) { Start-Sleep -Milliseconds 50 }
+Assert (([IO.File]::ReadAllLines($preferences)).Count -ge 13) 'Older preferences were not migrated.'
 Assert (([IO.File]::ReadAllLines($preferences))[11] -eq 'False') 'Smooth capture was not the default for older preferences.'
+Assert (([IO.File]::ReadAllLines($preferences))[12] -eq 'True') 'Shutdown blackout was not enabled for older preferences.'
 # Opening the EXE must restore a copy originally started in the tray.
 Invoke-Checked $app @()
 $restoreDeadline = [DateTime]::UtcNow.AddSeconds(10)
@@ -81,6 +82,15 @@ foreach ($iteration in 1..3) {
     Assert ($starting.WaitForExit(10000)) 'Update did not close a starting instance.'
     Assert (([IO.File]::ReadAllText($preferences)) -eq $saved) 'Update during startup changed preferences.'
 }
+# Exercise the same synchronous session-ending handler without logging Windows off.
+$ending = Start-Process -FilePath $app -ArgumentList $startupArguments -WindowStyle Hidden -PassThru
+Wait-InstanceMutex $ending
+$endDeadline = [DateTime]::UtcNow.AddSeconds(30)
+do { $readyEvent=$null; $ready=[Threading.EventWaitHandle]::TryOpenExisting('Local\AmbientLite.SessionEndTest',[ref]$readyEvent); if($readyEvent){$readyEvent.Dispose()}; if($ready){break}; Start-Sleep -Milliseconds 50 } while ([DateTime]::UtcNow -lt $endDeadline)
+Assert $ready 'Session-ending handler did not become ready.'
+Invoke-Checked $app @('--simulate-session-end')
+Assert ($ending.WaitForExit(10000)) 'Session-ending cleanup did not exit within its deadline.'
+Assert (([IO.File]::ReadAllText($preferences)) -eq $saved) 'Session-ending cleanup changed lighting preferences.'
 $uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{20EE0678-1A5E-4872-91F6-70B9106B0B8A}_is1'
 Assert (Test-Path $uninstallKey) 'Windows Installed apps entry missing.'
 $active = Start-Process -FilePath $app -ArgumentList $startupArguments -WindowStyle Hidden -PassThru
@@ -109,4 +119,4 @@ Assert ($portableProcess.WaitForExit(10000)) 'Portable shutdown failed.'
 Assert (([IO.File]::ReadAllLines($portableSettings))[2] -eq '23') 'Portable app did not retain its local preferences.'
 Assert (([IO.File]::ReadAllText($preferences)) -eq $saved) 'Portable app touched installed preferences.'
 Invoke-Checked $portableApp @('--startup-disable')
-Write-Output 'Install, startup, running update, three updates during startup, running uninstall, and portable preference checks passed.'
+Write-Output 'Install, startup, running updates, session-ending cleanup, uninstall, and portable preference checks passed.'

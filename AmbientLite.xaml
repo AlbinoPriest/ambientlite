@@ -298,26 +298,28 @@
    <Grid Grid.Row="3" Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions><CheckBox x:Name="CompatibilityCapture" Content="Compatibility capture"/><TextBlock Grid.Column="1" Text="Only if smooth capture doesn't work. May cause desktop hitches." Foreground="#B2B0B0" FontSize="11" TextWrapping="Wrap" Margin="18,0,0,0" VerticalAlignment="Center"/></Grid>
   </Grid>
   <Grid Grid.Row="2" x:Name="StartupPage" Visibility="Collapsed">
-   <StackPanel>
+   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,8,0"><StackPanel>
     <TextBlock Text="MAKE YOURSELF AT HOME" FontSize="10" Foreground="#B2B0B0" Margin="0,0,0,12"/>
     <Border Background="#202328" CornerRadius="18" Padding="22,18">
      <StackPanel>
-      <TextBlock Text="An easy beginning." FontFamily="Georgia" FontSize="23" Margin="0,0,0,12"/>
+      <TextBlock Text="An easy beginning." FontFamily="Georgia" FontSize="23" Margin="0,0,0,8"/>
       <CheckBox x:Name="StartWithWindows" Content="Start with Windows"/>
-      <TextBlock Text="Open AmbientLite when you sign in to this Windows account." FontSize="12" Foreground="#B2B0B0" Margin="34,0,0,16" TextWrapping="Wrap"/>
-      <Border BorderBrush="#363A41" BorderThickness="0,1,0,0" Padding="0,12,0,0">
+      <TextBlock Text="Open AmbientLite when you sign in to this Windows account." FontSize="11" Foreground="#B2B0B0" Margin="34,0,0,10" TextWrapping="Wrap"/>
+      <Border BorderBrush="#363A41" BorderThickness="0,1,0,0" Padding="0,8,0,0">
        <StackPanel>
         <CheckBox x:Name="TrayAtStartup" Content="Keep the window in the tray"/>
-        <TextBlock Text="A quiet start. Double-click the tray icon to open the app." FontSize="12" Foreground="#B2B0B0" Margin="34,0,0,12" TextWrapping="Wrap"/>
+        <TextBlock Text="A quiet start. Double-click the tray icon to open the app." FontSize="11" Foreground="#B2B0B0" Margin="34,0,0,8" TextWrapping="Wrap"/>
         <CheckBox x:Name="LightingAtStartup" Content="Start lighting at sign-in"/>
-        <TextBlock Text="Use your saved mode, colour, brightness, and screen settings." FontSize="12" Foreground="#B2B0B0" Margin="34,0,0,0" TextWrapping="Wrap"/>
+        <TextBlock Text="Use your saved mode, colour, brightness, and screen settings." FontSize="11" Foreground="#B2B0B0" Margin="34,0,0,0" TextWrapping="Wrap"/>
+        <CheckBox x:Name="OffAtExit" Content="Turn lights off on shutdown and exit" Margin="0,12,0,6"/>
+        <TextBlock Text="Send black before the app closes. Closing this window still keeps lighting in the tray." FontSize="11" Foreground="#B2B0B0" Margin="34,0,0,0" TextWrapping="Wrap"/>
        </StackPanel>
       </Border>
      </StackPanel>
     </Border>
-    <TextBlock x:Name="StartupStatus" Text="Tray and lighting choices apply when Windows starts the app." FontSize="12" Foreground="#F39485" TextWrapping="Wrap" Margin="4,17,4,0"/>
-    <TextBlock x:Name="StorageDetail" Text="Your preferences stay with you through updates." FontSize="11" Foreground="#B2B0B0" TextWrapping="Wrap" Margin="4,10,4,0"/>
-   </StackPanel>
+    <TextBlock x:Name="StartupStatus" Text="Tray and lighting choices apply when Windows starts the app." FontSize="12" Foreground="#F39485" TextWrapping="Wrap" Margin="4,10,4,0"/>
+    <TextBlock x:Name="StorageDetail" Text="Your preferences stay with you through updates." FontSize="11" Foreground="#B2B0B0" TextWrapping="Wrap" Margin="4,6,4,0"/>
+   </StackPanel></ScrollViewer>
   </Grid>
   <Grid Grid.Row="3" Margin="0,22,0,0"><TextBlock Text="Closing this window keeps lighting in the tray." FontSize="10" Foreground="#85878C"/><TextBlock x:Name="RunStats" Text="Local. Quiet. Yours." HorizontalAlignment="Right" FontSize="10" Foreground="#85878C"/></Grid>
  </Grid>

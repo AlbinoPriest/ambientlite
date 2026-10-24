@@ -1,4 +1,4 @@
-#define AppVersion "0.3.0"
+#define AppVersion "0.3.1"
 
 [Setup]
 AppId={{20EE0678-1A5E-4872-91F6-70B9106B0B8A}
@@ -30,7 +30,7 @@ RestartApplications=no
 UninstallDisplayName=AmbientLite
 VersionInfoDescription=AmbientLite Setup
 VersionInfoProductName=AmbientLite
-VersionInfoVersion=0.3.0.0
+VersionInfoVersion=0.3.1.0
 
 [Tasks]
 Name: desktopicon; Description: "Create a &desktop shortcut"; Flags: unchecked

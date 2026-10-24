@@ -9,11 +9,11 @@ using Microsoft.Win32;
 [assembly: AssemblyProduct("AmbientLite")]
 [assembly: AssemblyCompany("AlbinoPriest")]
 [assembly: AssemblyCopyright("Copyright © 2026 AlbinoPriest")]
-[assembly: AssemblyVersion("0.3.0.0")]
-[assembly: AssemblyFileVersion("0.3.0.0")]
+[assembly: AssemblyVersion("0.3.1.0")]
+[assembly: AssemblyFileVersion("0.3.1.0")]
 
 static class AppEnvironment {
- public const string Version="0.3.0";
+ public const string Version="0.3.1";
  public static readonly string Executable=Assembly.GetExecutingAssembly().Location;
  public static readonly bool Installed=File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"installed.marker"));
  public static readonly string Settings=Path.Combine(Installed?Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"AmbientLite"):AppDomain.CurrentDomain.BaseDirectory,"settings.txt");
@@ -46,16 +46,18 @@ static class StartupRegistration {
 // Named events wake the UI only when another launch or the installer needs it.
 sealed class AppSession : IDisposable {
  public const string MutexName=@"Local\AmbientLite.Robobloq";
- const string ShowEvent=@"Local\AmbientLite.Show",ExitEvent=@"Local\AmbientLite.Exit";
- EventWaitHandle show,exit; RegisteredWaitHandle showWait,exitWait;
- public AppSession(Action activate,Action quit):this(activate,quit,ShowEvent,ExitEvent){}
- internal AppSession(Action activate,Action quit,string showName,string exitName){
+ const string ShowEvent=@"Local\AmbientLite.Show",ExitEvent=@"Local\AmbientLite.Exit",SessionEndEvent=@"Local\AmbientLite.SessionEndTest";
+ EventWaitHandle show,exit,sessionEnd; RegisteredWaitHandle showWait,exitWait,sessionEndWait;
+ public AppSession(Action activate,Action quit,Action endSession=null):this(activate,quit,ShowEvent,ExitEvent,endSession){}
+ internal AppSession(Action activate,Action quit,string showName,string exitName,Action endSession=null){
   show=new EventWaitHandle(false,EventResetMode.AutoReset,showName);exit=new EventWaitHandle(false,EventResetMode.AutoReset,exitName);
   showWait=ThreadPool.RegisterWaitForSingleObject(show,(s,t)=>activate(),null,Timeout.Infinite,false);
   exitWait=ThreadPool.RegisterWaitForSingleObject(exit,(s,t)=>quit(),null,Timeout.Infinite,false);
+  if(endSession!=null){sessionEnd=new EventWaitHandle(false,EventResetMode.AutoReset,SessionEndEvent);sessionEndWait=ThreadPool.RegisterWaitForSingleObject(sessionEnd,(s,t)=>endSession(),null,Timeout.Infinite,false);}
   LifecycleTrace.Write("Shutdown handlers ready");
  }
  public static bool Activate(){return Signal(ShowEvent);}
+ public static bool SimulateSessionEnd(){return Signal(SessionEndEvent);}
  static bool Signal(string name){try{using(var handle=EventWaitHandle.OpenExisting(name)){handle.Set();return true;}}catch(WaitHandleCannotBeOpenedException){return false;}}
  public static int Shutdown(){return Shutdown(MutexName,ExitEvent,TimeSpan.FromSeconds(30));}
  internal static int Shutdown(string mutexName,string exitName,TimeSpan timeout){
@@ -76,5 +78,5 @@ sealed class AppSession : IDisposable {
   }
  }
  static bool WaitForExit(Mutex mutex,int milliseconds){try{if(!mutex.WaitOne(milliseconds))return false;}catch(AbandonedMutexException){}mutex.ReleaseMutex();return true;}
- public void Dispose(){showWait.Unregister(null);exitWait.Unregister(null);show.Dispose();exit.Dispose();}
+ public void Dispose(){showWait.Unregister(null);exitWait.Unregister(null);show.Dispose();exit.Dispose();if(sessionEndWait!=null)sessionEndWait.Unregister(null);if(sessionEnd!=null)sessionEnd.Dispose();}
 }

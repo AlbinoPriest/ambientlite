@@ -56,7 +56,7 @@ Click or right-click the tray icon for quick controls: change modes, adjust brig
 - **Double-click:** open the full app.
 - **Close or minimize the main window:** keep lighting running in the tray.
 - **Click outside the panel or press Escape:** dismiss quick controls.
-- **Exit in quick controls:** quit the app.
+- **Exit in quick controls:** quit the app and turn the strip off by default.
 
 The charcoal surfaces, coral accents, rounded controls, and serif headings follow the Tempo Soft design language from my [SwooshDrop](https://github.com/AlbinoPriest/swooshdrop) project.
 
@@ -109,6 +109,10 @@ Open **Startup** in the app and enable **Start with Windows**. It is off by defa
 
 These choices apply to Windows startup; opening the app yourself shows its window and waits for **Start lighting**. Registration is for the current Windows account only. You can also manage it in Windows Startup apps. Disable SyncLight's own startup entry to avoid both apps opening together.
 
+**Turn lights off on shutdown and exit** is enabled by default, independently of Windows startup. Before a normal Windows shutdown, sign-out, or full app exit, AmbientLite stops its lighting worker and sends black to the configured LEDs. This prevents the last colour staying visible when the USB port remains powered. Closing or minimizing the main window still keeps the app and lighting running in the tray; pausing still holds the last colour. Disable the option under **Startup** if you prefer to keep the last colour after exiting.
+
+The lights-off attempt has a 1.5-second deadline and does not cancel Windows shutdown. It requires a connected controller and cannot run after forced termination or power loss. It also cannot control a strip that resets itself after the app has stopped. AmbientLite leaves the controller alone if SyncLight is running.
+
 Portable users can enable the same feature, but must keep the executable at the same path. After moving it, open the app from the new folder and enable startup there. Disable startup before deleting a portable copy. The installer is the easier option if you want it running every day.
 
 ## Requirements and current limits
@@ -158,6 +162,7 @@ The Windows workflow compiles both executables and the installer, runs protocol 
 | `QuickControls.cs` | Tray panel and native title-bar colours |
 | `AppEnvironment.cs` / `StartupControls.cs` | Portable/installed storage, startup registration, and instance activation |
 | `installer.iss` / `build-setup.ps1` | Per-user installer, shortcuts, updates, and uninstall |
+| `ShutdownLighting.cs` / `ShutdownControls.cs` | Bounded stop-and-blackout cleanup and Windows session-ending handling |
 | `AmbientLite.xaml` / `TrayFlyout.xaml` | Main and tray interface |
 | `Documentation.cs` | Render UI images without starting USB output |
 
@@ -176,6 +181,10 @@ The Windows workflow compiles both executables and the installer, runs protocol 
 # Capture-only timing samples; no USB output. Close the running app first.
 .\AmbientLite.Diagnostics.exe --capture-profile --seconds 10
 .\AmbientLite.Diagnostics.exe --capture-profile --compatibility --seconds 10
+
+# Exercise the running app's shutdown handler; closes AmbientLite, not Windows.
+# Sends black to the strip if shutdown/exit lights-off is enabled.
+.\AmbientLite.Diagnostics.exe --simulate-session-end
 
 # Inspect matching controller/report size; no colour output
 .\AmbientLite.Diagnostics.exe --probe

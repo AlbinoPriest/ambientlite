@@ -34,5 +34,5 @@ sealed partial class LightWindow {
  void SaveStartupChoices(){if(refreshingStartup)return;startInTray=trayAtStartup.IsChecked==true;startLighting=lightingAtStartup.IsChecked==true;SaveIfValid();}
  public void Activate(){window.Dispatcher.BeginInvoke(new Action(Show));}
  public void RequestExit(){LifecycleTrace.Write("Quit callback queued");window.Dispatcher.BeginInvoke(new Action(async()=>await ExitApplication()),System.Windows.Threading.DispatcherPriority.ContextIdle);}
- async Task ExitApplication(){LifecycleTrace.Write("Closing requested");exiting=true;HideQuick();await Stop();LifecycleTrace.Write("Lighting worker stopped");window.Close();}
+ async Task ExitApplication(){if(exiting)return;LifecycleTrace.Write("Closing requested");exiting=true;HideQuick();await PrepareExitLighting();LifecycleTrace.Write("Lighting exit cleanup finished");window.Close();}
 }

@@ -14,6 +14,7 @@ foreach ($kind in @('winexe','exe')) {
  $arguments += (Join-Path $PSScriptRoot 'AppEnvironment.cs'),(Join-Path $PSScriptRoot 'StartupControls.cs')
  $arguments += (Join-Path $PSScriptRoot 'DesktopCapture.cs')
  $arguments += (Join-Path $PSScriptRoot 'CaptureDiagnostics.cs')
+ $arguments += (Join-Path $PSScriptRoot 'ShutdownLighting.cs'),(Join-Path $PSScriptRoot 'ShutdownControls.cs')
  & $compiler @arguments
  if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
 }
