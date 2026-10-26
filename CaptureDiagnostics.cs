@@ -6,6 +6,20 @@ using System.Threading;
 using System.Windows.Forms;
 
 static class CaptureDiagnostics {
+ public static int Switches(){
+  var screen=Screen.AllScreens.FirstOrDefault(s=>s.DeviceName.EndsWith("DISPLAY2"))??Screen.PrimaryScreen;int created=0,minLit=71;Capture capture=null;
+  using(var frames=new LightingFrames(()=>{created++;return capture=new Capture();},screen.Bounds,41,15,true)){
+   for(int cycle=0;cycle<30;cycle++){
+    frames.Commit(frames.Read(1,100,45,0xFF6421));Thread.Sleep(30);
+    var wait=Stopwatch.StartNew();System.Drawing.Color[] colors=null;
+    while(colors==null&&wait.Elapsed.TotalSeconds<5){colors=frames.Read(0,100,45,0);if(colors==null)Thread.Sleep(10);}
+    if(colors==null)throw new Exception("Screen capture did not resume in cycle "+cycle);
+    frames.Commit(colors);minLit=Math.Min(minLit,frames.LastSampleNonBlack);Thread.Sleep(30);
+   }
+   Console.WriteLine("Real GPU mode round trips=30 CaptureSessions="+created+" MinimumNonBlackSampleZones="+minLit+" Readbacks="+capture.Readbacks+" BusySkips="+capture.BusySkips);
+   if(created!=1||capture.Readbacks==0)throw new Exception("Capture session did not stay reusable.");
+  }return 0;
+ }
  public static int Run(string[] args){
   int seconds=10,at=Array.IndexOf(args,"--seconds"),requested;if(at>=0&&at+1<args.Length&&int.TryParse(args[at+1],out requested))seconds=Math.Max(1,Math.Min(60,requested));
   var screen=Screen.AllScreens.FirstOrDefault(s=>s.DeviceName.EndsWith("DISPLAY2"))??Screen.PrimaryScreen;

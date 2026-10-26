@@ -53,6 +53,7 @@ static class SessionTests {
   }
   DelayedHandler(false);DelayedHandler(true);
   ShutdownTests.Run();
+  LightingTests.Run();
   string empty=@"Local\AmbientLite.SessionTest."+Guid.NewGuid().ToString("N");
   Assert(AppSession.Shutdown(Name(empty,"Mutex"),Name(empty,"Exit"),TimeSpan.FromSeconds(1))==0,"Stopping an absent instance should succeed.");
   Console.WriteLine("Delayed startup shutdown, timeout, and absent instance checks passed.");return 0;

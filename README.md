@@ -40,7 +40,7 @@ The WPF interface measured about **138 MB of working memory and 1.01% CPU** in a
 
 **Screen sync** samples a selected monitor's edges and follows the colours on screen. GPU capture is the default: the desktop is reduced on the GPU, and colour readback skips busy buffers instead of waiting for them. Adjust brightness, smoothing, and refresh rate while it runs. A 20 fps target is the default; actual capture rate depends on the system and workload.
 
-**Static colour** gives the whole strip one steady colour. Drag the wheel, choose a preset, and adjust brightness. Static mode stops screen capture and waits for changes instead of sampling continuously.
+**Static colour** gives the whole strip one steady colour. Drag the wheel, choose a preset, and adjust brightness. Static mode waits for changes without polling the desktop. If screen sync was already active, its capture session is parked so it can resume without rebuilding the graphics pipeline.
 
 ![Static colour: a colour wheel and eight curated presets](docs/images/static-colour.png)
 
@@ -157,6 +157,7 @@ The Windows workflow compiles both executables and the installer, runs protocol 
 |---|---|
 | `AmbientLite.cs` | USB transport, capture, protocol, entry point, diagnostics |
 | `DesktopCapture.cs` / `CaptureDiagnostics.cs` | GPU downsampling, nonblocking readback, compatibility capture, and capture profiling |
+| `LightingFrames.cs` | Shared mode transitions, capture lifetime, smoothing continuity, and readback watchdog |
 | `LightWindow.cs` | Main UI, preferences, modes, lighting worker |
 | `ColourWheel.cs` | Colour wheel and HSV/RGB conversion |
 | `QuickControls.cs` | Tray panel and native title-bar colours |
@@ -181,6 +182,9 @@ The Windows workflow compiles both executables and the installer, runs protocol 
 # Capture-only timing samples; no USB output. Close the running app first.
 .\AmbientLite.Diagnostics.exe --capture-profile --seconds 10
 .\AmbientLite.Diagnostics.exe --capture-profile --compatibility --seconds 10
+
+# Repeated real-GPU static/screen transitions; no USB output
+.\AmbientLite.Diagnostics.exe --capture-transition-test
 
 # Exercise the running app's shutdown handler; closes AmbientLite, not Windows.
 # Sends black to the strip if shutdown/exit lights-off is enabled.
@@ -212,7 +216,9 @@ Regenerate the documentation images without starting capture or USB output:
 
 Screen sync receives a desktop texture through DXGI, downsamples it to **256 × 128** with a Direct3D 11 compute shader, then reads a completed staging buffer with `DO_NOT_WAIT`. Three reusable readback buffers prevent a busy copy from forcing a synchronous CPU/GPU wait. The desktop stays on the GPU until it has been reduced; only the small colour surface is copied to the CPU. The previous duplication frame is held between samples so Windows can coalesce updates.
 
-The app averages edge bands, smooths the result, and sends RGB frames directly over HID. Duplicate LED-colour frames are suppressed except for a one-second refresh. If the GPU is busy, lighting can use an older completed sample; this trades some lighting latency for desktop responsiveness. Static mode releases capture and waits for setting changes. The compatibility path uses GDI instead.
+The app averages edge bands, smooths the result, and sends RGB frames directly over HID. Duplicate LED-colour frames are suppressed except for a one-second refresh. If the GPU is busy, lighting can use an older completed sample; this trades some lighting latency for desktop responsiveness. Static mode parks an existing capture session and waits for setting changes. The session is released when lighting is paused or the app exits; starting directly in static mode creates no capture session. This retains some capture memory after screen sync, while avoiding repeated device/session reconstruction during mode switches. The compatibility path uses GDI instead.
+
+On return to screen sync, the last LED output is held until a valid desktop image is available, and smoothing starts from the last static colour. Cursor-only notifications cannot initialize an image. A GPU readback that stops completing for two seconds triggers capture recovery; static idle time does not count toward that timeout. Valid black desktop images remain valid colours.
 
 USB writes are serialized and bounded by a timeout. During normal use, screen pixels stay in memory; the app does not save or upload them. No vendor DLLs, firmware images, or application bundles are included.
 

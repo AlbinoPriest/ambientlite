@@ -21,7 +21,7 @@ An earlier console-only capture-and-USB diagnostic measured 0.54% CPU and 52.1 M
 - GPU downsampling to a reused 256 × 128 surface, with three nonblocking readback buffers.
 - Adjustable capture target, default 20 fps.
 - Serialized USB writes and suppression of duplicate screen-colour frames.
-- Static mode releases capture and waits for setting changes.
+- Static mode waits without polling. An existing capture session is retained for reliable mode changes, then released on pause or exit.
 - Tray controls are created on demand, with no polling loop or continuous animation.
 
 A 20 fps target typically produced about 16–18 captures per second on the tested setup. Windows scheduling and capture cost affect the actual rate.
@@ -44,6 +44,8 @@ The GPU path adds a device, desktop-sized GPU input texture, small output textur
 The fallback remains available as **Compatibility capture** in Strip setup, including for rotated displays. It is optional and off by default. The source uses only Windows graphics APIs and adds no third-party runtime or packages.
 
 The implementation follows Microsoft's [Desktop Duplication guidance](https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/desktop-dup-api), [frame lifetime guidance](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgioutputduplication-releaseframe), and [nonblocking Map semantics](https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_map_flag).
+
+Version 0.3.2 parks the graphics session during static colour rather than disposing and rebuilding it on each mode change. This retains the existing device/texture memory while idle but makes no desktop-capture polls. Starting in static mode still creates no capture device. Capture resources are released on pause and exit. A local thirty-round-trip capture test reused one GPU session, completed fifteen readbacks, and sampled non-black colour in all 71 zones on each tested return to screen sync. This is a targeted local regression check, not a guarantee for every driver.
 
 ## Comparing fairly
 

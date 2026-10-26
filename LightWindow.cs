@@ -62,13 +62,20 @@ sealed partial class LightWindow {
  [System.Runtime.InteropServices.DllImport("user32.dll")]static extern bool DestroyIcon(IntPtr icon);
  async Task Start(bool solid){if(exiting||cancellation!=null)return;if(Process.GetProcessesByName("SyncLight").Length>0){State(false,false,"SyncLight is still open","Exit SyncLight from its tray icon, then start lighting here.");return;}int top,side;if(!Layout(out top,out side)){Navigate("Setup");return;}var bounds=screens[monitor.SelectedIndex].Bounds;bool rev=reverse.IsChecked==true;testing=solid;var tokenSource=new CancellationTokenSource();cancellation=tokenSource;var token=tokenSource.Token;State(true,false,"Connecting to your lights…","Getting everything ready.");sync.IsEnabled=false;UpdateQuick();
   bool useCompatibility=compatibilityCapture.IsChecked==true;
-  worker=Task.Run(async()=>{var devices=Hid.Find();if(devices.Length!=1)throw new IOException(devices.Length==0?"Plug in your light strip and try again.":"More than one light controller is connected.");using(var hid=new Hid(devices[0])){Capture capture=null;try{
+  worker=Task.Run(async()=>{var devices=Hid.Find();if(devices.Length!=1)throw new IOException(devices.Length==0?"Plug in your light strip and try again.":"More than one light controller is connected.");using(var hid=new Hid(devices[0]))using(var frames=new LightingFrames(()=>new Capture(useCompatibility),bounds,top,side,rev)){
    await window.Dispatcher.InvokeAsync(()=>{if(solid)State(true,true,"A little blue for you.","Checking every light on the strip.");else ActiveState();sync.IsEnabled=true;UpdateQuick();},DispatcherPriority.Normal,token);
-   var last=new Drawing.Color[top+side*2];byte[] previous=null;int seq=1;var sent=Stopwatch.StartNew();
-   while(!token.IsCancellationRequested){var tick=Stopwatch.StartNew();Drawing.Color[] colors;if(solid)colors=Enumerable.Repeat(Drawing.Color.FromArgb(0,0,40),last.Length).ToArray();else if(liveMode==1){if(capture!=null){capture.Dispose();capture=null;}int rgb=liveColour;double power=liveBrightness/100.0;var chosen=Drawing.Color.FromArgb((int)(((rgb>>16)&255)*power),(int)(((rgb>>8)&255)*power),(int)((rgb&255)*power));colors=Enumerable.Repeat(chosen,last.Length).ToArray();}else{if(capture==null)capture=new Capture(useCompatibility);if(!capture.Grab(bounds)){await Task.Delay(Math.Max(1,1000/liveRate),token);continue;}colors=capture.Edge(side,top,rev);double power=liveBrightness/100.0,blend=1-liveSmoothing/100.0;for(int i=0;i<colors.Length;i++){var c=colors[i];colors[i]=Drawing.Color.FromArgb((int)(last[i].R*(1-blend)+c.R*power*blend),(int)(last[i].G*(1-blend)+c.G*power*blend),(int)(last[i].B*(1-blend)+c.B*power*blend));}last=colors;}
-    var packet=Protocol.Frame(colors,seq);bool changed=previous==null;for(int i=6;!changed&&i<packet.Length-1;i++)if(packet[i]!=previous[i])changed=true;if(changed||sent.ElapsedMilliseconds>=1000){await hid.Send(packet,token);previous=packet;sent.Restart();seq=seq%254+1;}if(liveMode==0)Interlocked.Increment(ref frameCount);if(solid)break;if(liveMode==1)await changes.WaitAsync(token);else await Task.Delay(Math.Max(1,1000/liveRate-(int)tick.ElapsedMilliseconds),token);
+   byte[] previous=null;int seq=1;var sent=Stopwatch.StartNew();
+   while(!token.IsCancellationRequested){var tick=Stopwatch.StartNew();int mode=liveMode;
+    var colors=solid?Enumerable.Repeat(Drawing.Color.FromArgb(0,0,40),top+side*2).ToArray():frames.Read(mode,liveBrightness,liveSmoothing,liveColour);
+    if(colors==null){await Task.Delay(Math.Max(1,1000/liveRate),token);continue;}
+    if(!solid&&mode!=liveMode)continue; // Never send a frame computed for a mode that was replaced.
+    var packet=Protocol.Frame(colors,seq);bool changed=previous==null;for(int i=6;!changed&&i<packet.Length-1;i++)if(packet[i]!=previous[i])changed=true;
+    if(changed||sent.ElapsedMilliseconds>=1000){await hid.Send(packet,token);previous=packet;sent.Restart();seq=seq%254+1;}
+    frames.Commit(colors);if(mode==0)Interlocked.Increment(ref frameCount);if(solid)break;
+    if(mode!=liveMode)continue;
+    if(mode==1)await changes.WaitAsync(token);else await Task.Delay(Math.Max(1,1000/liveRate-(int)tick.ElapsedMilliseconds),token);
    }
-  }finally{if(capture!=null)capture.Dispose();}}});
+  }});
   string error=null;try{await worker;}catch(OperationCanceledException){}catch(Exception ex){error=ex.Message;}
   finally{if(cancellation==tokenSource)cancellation=null;tokenSource.Dispose();testing=false;Interlocked.Exchange(ref frameCount,0);sync.IsEnabled=true;if(error==null)State(false,false,solid?"Your lights are connected.":"Taking a little pause.",solid?"Blue sent to the whole strip. Ready to follow your screen.":"Your lights keep their last colour. Start again whenever you like.");else State(false,false,"Your lights need a moment.",error);UpdateLayout();UpdateQuick();}
  }

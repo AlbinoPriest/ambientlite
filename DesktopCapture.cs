@@ -51,8 +51,10 @@ sealed class DesktopCapture : IDisposable {
  IntPtr device,context,duplication,input,inputView,small,smallView,shader,sampler;
  readonly IntPtr[] staging=new IntPtr[3];readonly IntPtr[] inputBinding=new IntPtr[1],outputBinding=new IntPtr[1],samplerBinding=new IntPtr[1],empty=new IntPtr[1];
  int head,count;bool held,hasImage;
+ readonly ReadbackWatchdog readbackWatchdog=new ReadbackWatchdog();
  Dx.Acquire acquire;Dx.Result release;Dx.Copy copy;Dx.Map map;Dx.Unmap unmap;Dx.SetResources resources,samplers;Dx.SetUav uavs;Dx.SetShader setShader;Dx.Dispatch dispatch;Dx.Void flush;
  public int Readbacks{get;private set;}public int BusySkips{get;private set;}
+ public void Pause(){readbackWatchdog.Pause();}
  public DesktopCapture(string monitor){try{Initialize(monitor);}catch{Dispose();throw;}}
  DesktopCapture(){try{uint level;Dx.Check(Dx.D3D11CreateDevice(IntPtr.Zero,5,IntPtr.Zero,0x20,IntPtr.Zero,0,7,out device,out level,out context),"create the test device");BindMethods();InitializeBuffers();}catch{Dispose();throw;}}
  void Initialize(string monitor){
@@ -123,7 +125,7 @@ SamplerState linearClamp : register(s0);
  }
  void ReadReady(byte[] pixels){
   // Read older copies only. DO_NOT_WAIT prevents CPU/GPU synchronization stalls.
-  while(count>0){Dx.Mapped data;int hr=map(context,staging[head],0,1,0x100000,out data);if(hr==Busy){BusySkips++;break;}Dx.Check(hr,"read captured colours");
+  while(count>0){Dx.Mapped data;int hr=map(context,staging[head],0,1,0x100000,out data);if(hr==Busy){BusySkips++;if(readbackWatchdog.Busy())throw new COMException("GPU readback stopped making progress.",unchecked((int)0x887A0007));break;}Dx.Check(hr,"read captured colours");readbackWatchdog.Ready();
    try{if(data.RowPitch<Capture.W*4)throw new IOException("Unexpected capture row size.");for(int y=0;y<Capture.H;y++)Marshal.Copy(IntPtr.Add(data.Data,checked(y*(int)data.RowPitch)),pixels,y*Capture.W*4,Capture.W*4);}
    finally{unmap(context,staging[head],0);}head=(head+1)%staging.Length;count--;hasImage=true;Readbacks++;
   }
@@ -143,7 +145,7 @@ SamplerState linearClamp : register(s0);
   if(acquired==NoFrame)return hasImage;Dx.Check(acquired,"read the desktop frame");held=true;
   IntPtr texture=IntPtr.Zero;
   try{
-   if(info.Present==0&&input!=IntPtr.Zero)return hasImage; // Ignore cursor-only updates.
+   if(info.Present==0)return hasImage; // Cursor-only events cannot initialize a desktop image.
    texture=Dx.Query(resource,"6f15aaf2-d208-4e89-9ab4-489535d34f9c");Submit(texture);
   }finally{Dx.Free(ref texture);Dx.Free(ref resource);}
   return hasImage;

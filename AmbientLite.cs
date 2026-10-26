@@ -57,11 +57,12 @@ sealed class Hid : IDisposable {
  public void Dispose(){if(stream!=null)stream.Dispose();}
 }
 
-sealed class Capture : IDisposable {
+sealed class Capture : ILightingCapture {
  public const int W=256,H=128;readonly byte[] pixels=new byte[W*H*4];readonly bool compatibility;DesktopCapture gpu;LegacyCapture gdi;readonly Stopwatch clock=Stopwatch.StartNew();long retryAt;bool initialized;
  public string Backend{get{return compatibility?"Compatibility capture":"Smooth capture";}}
  public int Readbacks{get{return gpu==null?0:gpu.Readbacks;}}
  public int BusySkips{get{return gpu==null?0:gpu.BusySkips;}}
+ public void Pause(){if(gpu!=null)gpu.Pause();}
  public Capture(bool compatibility=false){this.compatibility=compatibility;}
  public bool Grab(Rectangle r){
   if(compatibility){if(gdi==null)gdi=new LegacyCapture();return gdi.Grab(r,pixels);}
@@ -83,6 +84,7 @@ static class Program {
   if(args.Contains("--shutdown"))return AppSession.Shutdown();
   if(args.Contains("--simulate-session-end"))return AppSession.SimulateSessionEnd()?0:1;
   if(args.Contains("--capture-profile"))return CaptureDiagnostics.Run(args);
+  if(args.Contains("--capture-transition-test"))return CaptureDiagnostics.Switches();
   if(args.Contains("--capture-self-test")){DesktopCapture.SelfTest();return 0;}
   if(args.Contains("--licenses")){foreach(string name in new[]{"Ambient.License","Ambient.SwooshLicense"})using(var reader=new StreamReader(System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream(name)))Console.WriteLine(reader.ReadToEnd());return 0;}
   if(args.Contains("--startup-enable")||args.Contains("--startup-disable")){StartupRegistration.SetEnabled(args.Contains("--startup-enable"));return 0;}

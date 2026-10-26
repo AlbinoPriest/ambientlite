@@ -22,7 +22,7 @@ jobs:
         run: |
           & ./AmbientLite.Diagnostics.exe --self-test
           if ($LASTEXITCODE -ne 0) { throw 'Self-test failed' }
-      - name: Check shutdown during delayed startup
+      - name: Check mode transitions and shutdown regressions
         shell: powershell
         run: ./tests/session.ps1
       - name: Check GPU downsampling and readback
