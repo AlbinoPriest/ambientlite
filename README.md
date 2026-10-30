@@ -48,6 +48,10 @@ The palette includes **Candle, Soft white, Coral, Rose, Lavender, Blue hour, Sea
 
 ## Small when you need it
 
+### Optional local control
+
+A versioned, same-user Windows named-pipe interface supports native front ends such as EmberRGB. AmbientLite remains independently usable and owns the strip and capture pipeline. `--companion` runs it without a second window/tray icon; no service or TCP listener is added. See [local control protocol and lifecycle](docs/LOCAL-CONTROL.md). Companion mode still loads WPF internally; it is not a new headless renderer.
+
 Click or right-click the tray icon for quick controls: change modes, adjust brightness, pick a colour, or pause lighting. Screen-sync mode also offers smoothing and refresh-rate controls.
 
 <p align="center"><img src="docs/images/quick-controls.png" width="350" alt="AmbientLite tray panel with mode selection, brightness, curated colours, and start/pause controls"></p>

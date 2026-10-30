@@ -13,7 +13,7 @@ sealed partial class LightWindow {
   try{startWithWindows.IsChecked=!renderingDocumentation&&StartupRegistration.Enabled;}catch(Exception ex){Text("StartupStatus",ex.Message);}
   trayAtStartup.IsChecked=startInTray;lightingAtStartup.IsChecked=startLighting;refreshingStartup=false;
   Text("StorageDetail",renderingDocumentation||AppEnvironment.Installed?"Installed for your Windows account. Preferences stay with you through updates.":"Portable edition. Keep this folder in place if you enable Windows startup.");
-  if(Environment.GetCommandLineArgs().Contains("--startup")&&startInTray){window.Opacity=0;window.ShowInTaskbar=false;}
+  if((Environment.GetCommandLineArgs().Contains("--startup")&&startInTray)||Companion){window.Opacity=0;window.ShowInTaskbar=false;}
   startWithWindows.Checked+=(s,e)=>ChangeStartup(true);startWithWindows.Unchecked+=(s,e)=>ChangeStartup(false);
   trayAtStartup.Checked+=(s,e)=>SaveStartupChoices();trayAtStartup.Unchecked+=(s,e)=>SaveStartupChoices();
   lightingAtStartup.Checked+=(s,e)=>SaveStartupChoices();lightingAtStartup.Unchecked+=(s,e)=>SaveStartupChoices();
@@ -22,7 +22,7 @@ sealed partial class LightWindow {
    if(!firstLaunch)return;firstLaunch=false;
    LifecycleTrace.Write("Window loaded");
    bool startup=Environment.GetCommandLineArgs().Contains("--startup");
-   if(startup&&startInTray){window.Hide();window.Opacity=1;}
+   if((startup&&startInTray)||Companion){window.Hide();window.Opacity=1;}
    if(!renderingDocumentation&&(Environment.GetCommandLineArgs().Contains("--start")||(startup&&startLighting)))await Start(false);
   };
  }

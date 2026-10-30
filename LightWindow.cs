@@ -38,7 +38,7 @@ sealed partial class LightWindow {
   brightness.ValueChanged+=(s,e)=>UpdateValues();smoothing.ValueChanged+=(s,e)=>UpdateValues();rate.ValueChanged+=(s,e)=>UpdateValues();topCount.TextChanged+=(s,e)=>UpdateLayout();sideCount.TextChanged+=(s,e)=>UpdateLayout();reverse.Checked+=(s,e)=>SaveIfValid();reverse.Unchecked+=(s,e)=>SaveIfValid();monitor.SelectionChanged+=(s,e)=>SaveIfValid();
   Get<Button>("LightingNav").Click+=(s,e)=>Navigate("Lighting");Get<Button>("ColourNav").Click+=(s,e)=>Navigate("Colour");Get<Button>("SetupNav").Click+=(s,e)=>Navigate("Setup");Get<Button>("StartupNav").Click+=(s,e)=>Navigate("Startup");SetupStartup();SetupShutdown();
   sync.Click+=async(s,e)=>{if(IsRunning)await Stop();else await Start(false);};test.Click+=async(s,e)=>await Start(true);
-  tray=new Forms.NotifyIcon{Text="AmbientLite · Ready",Visible=!renderingDocumentation};SetIcon(false);SetupQuickControls();
+  tray=new Forms.NotifyIcon{Text="AmbientLite · Ready",Visible=!renderingDocumentation&&!Companion};SetIcon(false);SetupQuickControls();
   window.StateChanged+=(s,e)=>{if(window.WindowState==WindowState.Minimized)window.Hide();};
   window.Closing+=(s,e)=>{if(!exiting){e.Cancel=true;SaveIfValid();window.Hide();}else if(!endingSession&&exitLighting!=null&&!exitLighting.IsCompleted){e.Cancel=true;}else{SaveIfValid();statsTimer.Stop();tray.Visible=false;var icon=tray.Icon;tray.Dispose();if(icon!=null)icon.Dispose();}};
   window.IsVisibleChanged+=(s,e)=>{Interlocked.Exchange(ref frameCount,0);if(window.IsVisible)statsTimer.Start();else statsTimer.Stop();};

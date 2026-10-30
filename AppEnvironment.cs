@@ -9,11 +9,11 @@ using Microsoft.Win32;
 [assembly: AssemblyProduct("AmbientLite")]
 [assembly: AssemblyCompany("AlbinoPriest")]
 [assembly: AssemblyCopyright("Copyright © 2026 AlbinoPriest")]
-[assembly: AssemblyVersion("0.3.2.0")]
-[assembly: AssemblyFileVersion("0.3.2.0")]
+[assembly: AssemblyVersion("0.4.0.0")]
+[assembly: AssemblyFileVersion("0.4.0.0")]
 
 static class AppEnvironment {
- public const string Version="0.3.2";
+ public const string Version="0.4.0";
  public static readonly string Executable=Assembly.GetExecutingAssembly().Location;
  public static readonly bool Installed=File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"installed.marker"));
  public static readonly string Settings=Path.Combine(Installed?Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"AmbientLite"):AppDomain.CurrentDomain.BaseDirectory,"settings.txt");
