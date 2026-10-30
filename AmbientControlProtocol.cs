@@ -25,7 +25,7 @@ namespace AmbientLite.Control {
  }
  [DataContract] public sealed class Reply {
   [DataMember] public int Version=1;
-  [DataMember] public bool Ok,Running,Companion;
+  [DataMember] public bool Ok,Running,Companion,Transitioning;
   [DataMember] public int ScreenFrames,ProcessId;
   [DataMember] public string Error,AppVersion,Title,Detail,SettingsKey;
   [DataMember] public Options Settings;
