@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $framework = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
 $compiler = Join-Path $framework 'csc.exe'
-$references = @('System.dll','System.Core.dll','System.Drawing.dll','System.Windows.Forms.dll','System.Xaml.dll','WPF\WindowsBase.dll','WPF\PresentationCore.dll','WPF\PresentationFramework.dll') | ForEach-Object { '/reference:' + (Join-Path $framework $_) }
+$references = @('System.dll','System.Core.dll','System.Drawing.dll','System.Windows.Forms.dll','System.Xaml.dll','System.Runtime.Serialization.dll','WPF\WindowsBase.dll','WPF\PresentationCore.dll','WPF\PresentationFramework.dll') | ForEach-Object { '/reference:' + (Join-Path $framework $_) }
 foreach ($kind in @('winexe','exe')) {
  $name = if ($kind -eq 'winexe') { 'AmbientLite.exe' } else { 'AmbientLite.Diagnostics.exe' }
  $arguments = @('/nologo','/optimize+','/platform:x64',('/target:'+$kind),('/out:'+(Join-Path $PSScriptRoot $name)),('/win32icon:'+(Join-Path $PSScriptRoot 'AmbientLite.ico'))) + $references
@@ -15,7 +15,13 @@ foreach ($kind in @('winexe','exe')) {
  $arguments += (Join-Path $PSScriptRoot 'DesktopCapture.cs')
  $arguments += (Join-Path $PSScriptRoot 'CaptureDiagnostics.cs')
  $arguments += (Join-Path $PSScriptRoot 'ShutdownLighting.cs'),(Join-Path $PSScriptRoot 'ShutdownControls.cs')
- $arguments += (Join-Path $PSScriptRoot 'LightingFrames.cs')
+ $arguments += (Join-Path $PSScriptRoot 'LightingFrames.cs'),(Join-Path $PSScriptRoot 'AmbientControlProtocol.cs'),(Join-Path $PSScriptRoot 'LocalControl.cs')
  & $compiler @arguments
  if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
 }
+
+$testArguments = @('/main:AmbientControlChecks',('/out:'+(Join-Path $PSScriptRoot 'tests\ControlTests.exe'))) + @($arguments | Where-Object { $_ -notlike '/out:*' }) + @((Join-Path $PSScriptRoot 'tests\ControlTests.cs'))
+& $compiler @testArguments
+if ($LASTEXITCODE -ne 0) { throw 'Control test build failed' }
+& $compiler /nologo /target:exe /platform:x64 ('/reference:'+(Join-Path $framework 'System.Runtime.Serialization.dll')) ('/out:'+(Join-Path $PSScriptRoot 'tests\ControlProbe.exe')) (Join-Path $PSScriptRoot 'AmbientControlProtocol.cs') (Join-Path $PSScriptRoot 'tests\ControlProbe.cs')
+if ($LASTEXITCODE -ne 0) { throw 'Control probe build failed' }
