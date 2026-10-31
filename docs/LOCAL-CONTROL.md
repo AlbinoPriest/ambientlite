@@ -29,6 +29,8 @@ Settings: `Mode` (`screen` or `static`), six-digit `Colour`, exact display `Moni
 
 ## Companion mode and ownership
 
+AmbientLite 0.4.1 adds optional nullable `Warmth` (0–100) to settings, without changing protocol 1. Status returns a number when supported. Omission or null on apply preserves the engine's saved warmth, so older front ends cannot reset it accidentally; explicit 0 resets it to neutral. New clients hide or disable warmth when the engine omits it. The canonical schema remains mirrored in EmberRGB. Warmth affects screen sync only, before temporal smoothing, and is appended to the existing settings file with neutral as the migration default.
+
 `--companion` hides the main window and suppresses AmbientLite's tray icon. It does not itself start lighting. `--companion --startup` uses the existing saved startup-lighting choice, without showing another window or tray icon. `installed.marker` beside the executable selects `%LOCALAPPDATA%\AmbientLite\settings.txt`, as in installed standalone editions; otherwise portable settings remain beside the executable.
 
 The existing single-instance mutex applies to companion and standalone launches, so only one AmbientLite engine runs. If a compatible instance already exists, front ends attach to it. A front end should close only the process it launched, checking the returned process ID, and leave separately launched standalone instances running. Closing AmbientLite's window still leaves the engine running; the existing session/exit handlers and optional blackout apply unchanged.
@@ -36,6 +38,8 @@ The existing single-instance mutex applies to companion and standalone launches,
 The bridge reuses AmbientLite's existing worker and LightingFrames object. Static mode parks capture; changing back to screen mode reuses that capture session. It does not implement screen-reactive output for third-party RGB controllers. That future feature should publish bounded colour updates from this worker, rather than start another capture pipeline.
 
 ## Verification
+
+For local troubleshooting, launch with `--colour-log <absolute-path>` or set `AMBIENTLITE_COLOUR_LOG` only in the launcher's environment. The worker records per-LED sampled RGB, outgoing packet RGB, transmission results and readback counters at most once per second, with a 1 MiB per-process budget. This is disabled normally, adds no capture session, and never sends the log over the network. A successful write reports USB transport completion, not an acknowledgement of physical LED colour. Delete the local log when finished.
 
 ControlTests checks settings bounds, framed roundtrips, invalid/truncated lengths, same-user pipe exchange, unknown-version rejection and recovery after a disconnected client. Existing session, shutdown and 100 capture-mode round-trip tests pass. Hardware integration testing covers status, applying static settings through EmberRGB, pause/resume and restoration to the original screen configuration. Initial automated visual confirmation was inconclusive; the user subsequently confirmed a manual change worked. Software state is not independent proof of visible LED output.
 

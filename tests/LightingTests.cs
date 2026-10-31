@@ -12,6 +12,14 @@ static class LightingTests {
  }
  static void Assert(bool value,string message){if(!value)throw new Exception(message);}
  public static void Run(){
+  var sample=Color.FromArgb(65,37,28);
+  Assert(ScreenColour.Warm(sample,0)==sample,"Neutral warmth changed screen colours.");
+  Assert(ScreenColour.Warm(sample,100)==Color.FromArgb(65,30,3),"Maximum warmth did not reduce blue while retaining red.");
+  Assert(ScreenColour.Warm(Color.Black,100).ToArgb()==Color.Black.ToArgb(),"Warmth lit a black screen.");
+  using(var warmFrames=new LightingFrames(()=>new FakeCapture{Ready=true,Color=sample},new Rectangle(0,0,10,10),2,1,true)){
+   var warm=warmFrames.Read(0,100,0,0,100);Assert(warm.All(c=>c==Color.FromArgb(65,30,3)),"Screen warmth did not reach LED output.");warmFrames.Commit(warm);
+   var solid=warmFrames.Read(1,100,0,0x41251C,100);Assert(solid.All(c=>c==sample),"Screen warmth changed static colour.");
+  }
   var fake=new FakeCapture();int created=0;
   using(var frames=new LightingFrames(()=>{created++;return fake;},new Rectangle(0,0,3440,1440),2,1,true)){
    var orange=frames.Read(1,100,50,0xFF6400);frames.Commit(orange);

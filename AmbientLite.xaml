@@ -245,15 +245,18 @@
     <StackPanel Grid.Column="1">
      <Border Background="#202328" CornerRadius="18" Padding="18,17">
       <StackPanel>
-       <TextBlock Text="SET THE FEELING" FontSize="10" Foreground="#B2B0B0" Margin="0,0,0,24"/>
+       <TextBlock Text="SET THE FEELING" FontSize="10" Foreground="#B2B0B0" Margin="0,0,0,12"/>
        <Grid><TextBlock Text="Brightness" FontSize="13"/><TextBlock x:Name="BrightnessValue" Text="70%" HorizontalAlignment="Right" Foreground="#F39485" FontSize="12"/></Grid>
-       <Slider x:Name="Brightness" Minimum="0" Maximum="100" Value="70" Margin="0,12,0,4"/>
-       <TextBlock Text="A glow, or a little more." FontSize="11" Foreground="#B2B0B0" Margin="0,0,0,22"/>
+       <Slider x:Name="Brightness" Minimum="0" Maximum="100" Value="70" Margin="0,6,0,2"/>
+       <TextBlock Text="A glow, or a little more." FontSize="11" Foreground="#B2B0B0" Margin="0,0,0,10"/>
+       <Grid><TextBlock Text="Warmth" FontSize="13"/><TextBlock x:Name="WarmthValue" Text="Neutral" HorizontalAlignment="Right" Foreground="#F39485" FontSize="12"/></Grid>
+       <Slider x:Name="Warmth" Minimum="0" Maximum="100" Value="0" Margin="0,6,0,2" AutomationProperties.Name="Screen colour warmth"/>
+       <TextBlock Text="Less blue. A warmer screen glow." FontSize="11" Foreground="#B2B0B0" Margin="0,0,0,10"/>
        <Grid><TextBlock Text="Smoothing" FontSize="13"/><TextBlock x:Name="SmoothingValue" Text="45%" HorizontalAlignment="Right" Foreground="#F39485" FontSize="12"/></Grid>
-       <Slider x:Name="Smoothing" Minimum="0" Maximum="95" Value="45" Margin="0,12,0,4"/>
-       <TextBlock Text="Higher means gentler transitions." FontSize="11" Foreground="#B2B0B0" Margin="0,0,0,22"/>
+       <Slider x:Name="Smoothing" Minimum="0" Maximum="95" Value="45" Margin="0,6,0,2"/>
+       <TextBlock Text="Higher means gentler transitions." FontSize="11" Foreground="#B2B0B0" Margin="0,0,0,10"/>
        <Grid><TextBlock Text="Refresh rate" FontSize="13"/><TextBlock x:Name="RateValue" Text="20 fps" HorizontalAlignment="Right" Foreground="#F39485" FontSize="12"/></Grid>
-       <Slider x:Name="Rate" Minimum="5" Maximum="60" Value="20" Margin="0,12,0,4"/>
+       <Slider x:Name="Rate" Minimum="5" Maximum="60" Value="20" Margin="0,6,0,2"/>
        <TextBlock Text="20 fps is a good everyday balance." FontSize="11" Foreground="#B2B0B0" TextWrapping="Wrap"/>
       </StackPanel>
      </Border>

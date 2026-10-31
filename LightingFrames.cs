@@ -14,8 +14,9 @@ sealed class LightingFrames : IDisposable {
  readonly Func<ILightingCapture> create;readonly Rectangle bounds;readonly int top,side;readonly bool reverse;readonly Color[] last;
  ILightingCapture capture;
  public int LastSampleNonBlack{get;private set;}
+ public Color[] LastSampleColours{get;private set;}
  public LightingFrames(Func<ILightingCapture> create,Rectangle bounds,int top,int side,bool reverse){this.create=create;this.bounds=bounds;this.top=top;this.side=side;this.reverse=reverse;last=new Color[top+2*side];}
- public Color[] Read(int mode,int brightness,int smoothing,int rgb){
+ public Color[] Read(int mode,int brightness,int smoothing,int rgb,int warmth=0){
   Color[] colors;double power=brightness/100.0;
   if(mode==1){
    colors=new Color[last.Length];
@@ -25,13 +26,21 @@ sealed class LightingFrames : IDisposable {
   }else{
    if(capture==null)capture=create();
    if(!capture.Grab(bounds))return null; // Keep the actual LED output until an image is ready.
-   colors=capture.Edge(side,top,reverse);double blend=1-smoothing/100.0;int nonBlack=0;
-   for(int i=0;i<colors.Length;i++){var c=colors[i];if((c.R|c.G|c.B)!=0)nonBlack++;colors[i]=Color.FromArgb((int)(last[i].R*(1-blend)+c.R*power*blend),(int)(last[i].G*(1-blend)+c.G*power*blend),(int)(last[i].B*(1-blend)+c.B*power*blend));}LastSampleNonBlack=nonBlack;
+   colors=capture.Edge(side,top,reverse);if(ColourTrace.Enabled)LastSampleColours=(Color[])colors.Clone();double blend=1-smoothing/100.0;int nonBlack=0;
+   for(int i=0;i<colors.Length;i++){var c=ScreenColour.Warm(colors[i],warmth);if((c.R|c.G|c.B)!=0)nonBlack++;colors[i]=Color.FromArgb((int)(last[i].R*(1-blend)+c.R*power*blend),(int)(last[i].G*(1-blend)+c.G*power*blend),(int)(last[i].B*(1-blend)+c.B*power*blend));}LastSampleNonBlack=nonBlack;
   }
   return colors;
  }
  public void Commit(Color[] colors){Array.Copy(colors,last,last.Length);}
  public void Dispose(){if(capture!=null){capture.Dispose();capture=null;}}
+}
+
+static class ScreenColour {
+ public static Color Warm(Color color,int warmth){
+  warmth=Math.Max(0,Math.Min(100,warmth));
+  if(warmth==0)return color;
+  return Color.FromArgb(color.R,(int)Math.Round(color.G*(1-warmth*0.002)),(int)Math.Round(color.B*(1-warmth*0.009)));
+ }
 }
 
 sealed class ReadbackWatchdog {

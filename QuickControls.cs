@@ -43,7 +43,7 @@ sealed partial class LightWindow {
    Quick<Button>("QuickToggle").Click+=async(s,e)=>{Quick<Button>("QuickToggle").IsEnabled=false;if(IsRunning)await Stop();else await Start(false);UpdateQuick();};
    Quick<RadioButton>("QuickScreen").Checked+=(s,e)=>{if(!refreshingQuick)Navigate("Lighting");};
    Quick<RadioButton>("QuickStatic").Checked+=(s,e)=>{if(!refreshingQuick)Navigate("Colour");};
-   BindQuick("QuickBrightness",brightness);BindQuick("QuickSmoothing",smoothing);BindQuick("QuickRate",rate);
+   BindQuick("QuickBrightness",brightness);BindQuick("QuickSmoothing",smoothing);BindQuick("QuickRate",rate);BindQuick("QuickWarmth",warmth);
    for(int i=0;i<colourNames.Length;i++){int index=i;var c=(Color)ColorConverter.ConvertFromString(colourHex[i]);var stack=new StackPanel{HorizontalAlignment=HorizontalAlignment.Center};stack.Children.Add(new System.Windows.Shapes.Ellipse{Width=15,Height=15,Fill=new SolidColorBrush(c),HorizontalAlignment=HorizontalAlignment.Center,Margin=new Thickness(0,0,0,6)});stack.Children.Add(new TextBlock{Text=colourNames[i],FontSize=9,HorizontalAlignment=HorizontalAlignment.Center});var b=new Button{Content=stack,Margin=new Thickness(3),Padding=new Thickness(3,8,3,8),HorizontalContentAlignment=HorizontalAlignment.Center,ToolTip=colourNames[i]+" · "+colourHex[i]};System.Windows.Automation.AutomationProperties.SetName(b,colourNames[i]);b.Click+=(s,e)=>ChooseColour((Color)ColorConverter.ConvertFromString(colourHex[index]),colourNames[index]);quickSwatches.Add(b);Quick<System.Windows.Controls.Primitives.UniformGrid>("QuickSwatches").Children.Add(b);}
   }
   quickAnchor=Forms.Cursor.Position;UpdateQuick();flyout.Opacity=0;flyout.Show();flyout.UpdateLayout();PlaceQuick();flyout.Opacity=1;flyout.Activate();
@@ -56,7 +56,7 @@ sealed partial class LightWindow {
   Quick<System.Windows.Shapes.Ellipse>("QuickDot").Fill=Get<System.Windows.Shapes.Ellipse>("StateDot").Fill;
   Quick<Button>("QuickToggle").Content=sync.Content;Quick<Button>("QuickToggle").IsEnabled=sync.IsEnabled;
   Quick<RadioButton>("QuickScreen").IsChecked=liveMode==0;Quick<RadioButton>("QuickStatic").IsChecked=liveMode==1;
-  Quick<TextBlock>("QuickBrightnessText").Text=liveBrightness+"%";Quick<TextBlock>("QuickSmoothingText").Text=liveSmoothing+"%";Quick<TextBlock>("QuickRateText").Text=liveRate+" fps";
+  Quick<TextBlock>("QuickBrightnessText").Text=liveBrightness+"%";Quick<TextBlock>("QuickSmoothingText").Text=liveSmoothing+"%";Quick<TextBlock>("QuickRateText").Text=liveRate+" fps";Quick<TextBlock>("QuickWarmthText").Text=liveWarmth==0?"Neutral":liveWarmth+"%";
   Quick<StackPanel>("QuickColours").Visibility=liveMode==1?Visibility.Visible:Visibility.Collapsed;Quick<StackPanel>("QuickScreenSettings").Visibility=liveMode==0?Visibility.Visible:Visibility.Collapsed;
   Quick<TextBlock>("QuickColourName").Text=colourName+" · #"+liveColour.ToString("X6");Quick<System.Windows.Shapes.Ellipse>("QuickColourDot").Fill=Brush("#"+liveColour.ToString("X6"));
   for(int i=0;i<quickSwatches.Count;i++){bool selected=colourHex[i]=="#"+liveColour.ToString("X6");quickSwatches[i].BorderBrush=Brush(selected?"#F39485":"#363A41");quickSwatches[i].Background=Brush(selected?"#393035":"#292D33");}

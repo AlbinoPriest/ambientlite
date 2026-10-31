@@ -42,6 +42,8 @@ The WPF interface measured about **138 MB of working memory and 1.01% CPU** in a
 
 **Static colour** gives the whole strip one steady colour. Drag the wheel, choose a preset, and adjust brightness. Static mode waits for changes without polling the desktop. If screen sync was already active, its capture session is parked so it can resume without rebuilding the graphics pipeline.
 
+**Warmth** tunes screen sync to your strip and room. Neutral (0) preserves the sampled colours; moving right gradually reduces blue and a smaller amount of green for a warmer glow. It does not increase brightness or alter static colours. The setting is saved by AmbientLite and can be controlled by compatible EmberRGB versions.
+
 ![Static colour: a colour wheel and eight curated presets](docs/images/static-colour.png)
 
 The palette includes **Candle, Soft white, Coral, Rose, Lavender, Blue hour, Sea glass, and Daylight**. The selected colour and mode are saved between launches.

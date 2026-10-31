@@ -13,6 +13,7 @@ namespace AmbientLite.Control {
  [DataContract] public sealed class Options {
   [DataMember] public string Mode,Colour,Monitor;
   [DataMember] public int Brightness,Smoothing,Rate,Top,Side;
+  [DataMember(EmitDefaultValue=false)] public int? Warmth;
   [DataMember] public bool Reverse,Compatibility,OffOnExit,StartInTray,StartLighting,StartWithWindows;
  }
  [DataContract] public sealed class Display {

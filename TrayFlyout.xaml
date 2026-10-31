@@ -33,6 +33,8 @@
     <TextBlock x:Name="QuickColourName" Text="Custom colour" FontSize="11" Foreground="#B2B0B0" Margin="0,7,0,0"/>
    </StackPanel>
    <StackPanel x:Name="QuickScreenSettings" Margin="0,17,0,0">
+    <Grid><TextBlock Text="Warmth" FontSize="12"/><TextBlock x:Name="QuickWarmthText" FontSize="12" Foreground="#F39485" HorizontalAlignment="Right"/></Grid>
+    <Slider x:Name="QuickWarmth" Minimum="0" Maximum="100" Margin="0,9,0,14"/>
     <Grid><TextBlock Text="Smoothing" FontSize="12"/><TextBlock x:Name="QuickSmoothingText" FontSize="12" Foreground="#F39485" HorizontalAlignment="Right"/></Grid>
     <Slider x:Name="QuickSmoothing" Minimum="0" Maximum="95" Margin="0,9,0,14"/>
     <Grid><TextBlock Text="Refresh rate" FontSize="12"/><TextBlock x:Name="QuickRateText" FontSize="12" Foreground="#F39485" HorizontalAlignment="Right"/></Grid>
