@@ -19,3 +19,20 @@ $checksums = foreach ($asset in $assets) {
 }
 [System.IO.File]::WriteAllLines((Join-Path $destination 'SHA256SUMS.txt'), $checksums)
 Get-Item -LiteralPath $assets
+
+
+# A separate, versioned companion package is consumed by EmberRGB's optional updater.
+# Keep the ordinary standalone ZIP/installer above unchanged.
+$companionVersion=[Reflection.AssemblyName]::GetAssemblyName((Join-Path $PSScriptRoot 'AmbientLite.exe')).Version.ToString(3)
+$companionFolder=Join-Path $destination ('AmbientLite-'+$companionVersion+'-companion')
+New-Item -ItemType Directory -Force -Path $companionFolder | Out-Null
+foreach($file in @('AmbientLite.exe','README.md','LICENSE','SwooshDrop-LICENSE.txt')) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination $companionFolder -Force }
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'docs') -Destination $companionFolder -Recurse -Force
+[IO.File]::WriteAllText((Join-Path $companionFolder 'installed.marker'),'')
+$companionArchive=Join-Path $destination ('AmbientLite-'+$companionVersion+'-companion.zip')
+Compress-Archive -LiteralPath $companionFolder -DestinationPath $companionArchive -Force
+$companionFiles=[ordered]@{}
+Get-ChildItem -LiteralPath $companionFolder -Recurse -File | Sort-Object FullName | ForEach-Object { $companionFiles[$_.FullName.Substring($companionFolder.Length+1).Replace('\','/')]=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
+$companionManifest=[ordered]@{Schema=1;Product='AmbientLite';Version=$companionVersion;MinimumHost='0.12.0';ControlProtocol=1;Archive=[IO.Path]::GetFileName($companionArchive);Sha256=(Get-FileHash -LiteralPath $companionArchive -Algorithm SHA256).Hash.ToLowerInvariant();Files=$companionFiles}
+[IO.File]::WriteAllText((Join-Path $destination 'AmbientLite-companion-update.json'),($companionManifest|ConvertTo-Json -Depth 5),(New-Object Text.UTF8Encoding($false)))
+Get-Item -LiteralPath $companionArchive,(Join-Path $destination 'AmbientLite-companion-update.json')

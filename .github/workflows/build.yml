@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -53,3 +53,14 @@ jobs:
         with:
           name: AmbientLite-windows-x64
           path: dist/*
+
+      - name: Publish compatible tagged release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $manifest = Get-Content dist/AmbientLite-companion-update.json -Raw | ConvertFrom-Json
+          if ($env:GITHUB_REF_NAME -ne ('v'+$manifest.Version)) { throw 'Tag and package version differ' }
+          gh release create $env:GITHUB_REF_NAME dist/AmbientLite-windows-x64.zip dist/AmbientLite.exe ('dist/'+$manifest.Archive) dist/AmbientLite-companion-update.json dist/SHA256SUMS.txt --verify-tag --title ('AmbientLite '+$manifest.Version) --generate-notes
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }

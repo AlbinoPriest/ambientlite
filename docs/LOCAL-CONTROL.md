@@ -40,3 +40,8 @@ The bridge reuses AmbientLite's existing worker and LightingFrames object. Stati
 ControlTests checks settings bounds, framed roundtrips, invalid/truncated lengths, same-user pipe exchange, unknown-version rejection and recovery after a disconnected client. Existing session, shutdown and 100 capture-mode round-trip tests pass. Hardware integration testing covers status, applying static settings through EmberRGB, pause/resume and restoration to the original screen configuration. Initial automated visual confirmation was inconclusive; the user subsequently confirmed a manual change worked. Software state is not independent proof of visible LED output.
 
 This companion still initializes the native WPF interface internally, even when hidden. It avoids a duplicate capture and extra service, but it is not a headless-core memory optimization. Combined resource measurements belong to the integrating release; no unmeasured memory saving is claimed.
+
+
+## Compatible companion updates
+
+package.ps1 additionally creates a versioned companion ZIP and AmbientLite-companion-update.json for EmberRGB 0.12.0 or newer. The manifest declares local control protocol 1 and includes SHA-256 hashes for the archive and all files. Tagged release publication uploads both beside the standalone assets. EmberRGB can therefore update its own bundled engine without merging repositories or replacing the standalone app. Releases without this manifest are not eligible companion updates. Update ControlProtocol/minimum host metadata and tests if the local interface changes; do not mark an incompatible engine as protocol 1. Capture/colour processing code is unchanged by this packaging addition.
